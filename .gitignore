@@ -1,0 +1,3 @@
+*.o
+ast_test
+tokenizer_test
