@@ -60,16 +60,16 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     return;
   } else if (c == ';') {
     t->token_type = tt_semicolon;
-    t->literal_len = 0;
-    t->literal[0] = 0;
+    strcpy(t->literal, ";");
+    t->literal_len = strlen(t->literal);
   } else if (c == '(') {
     t->token_type = tt_lpar;
-    t->literal_len = 0;
-    t->literal[0] = 0;
+    strcpy(t->literal, "(");
+    t->literal_len = strlen(t->literal);
   } else if (c == ')') {
     t->token_type = tt_rpar;
-    t->literal_len = 0;
-    t->literal[0] = 0;
+    strcpy(t->literal, ")");
+    t->literal_len = strlen(t->literal);
   } else if (operator_char_p(c)) { // currently "," is a special literal
     t->token_type = tt_literal;
     t->literal_len = 1;
