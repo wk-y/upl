@@ -3,7 +3,7 @@ VPATH = src
 
 CFLAGS = -fsanitize=address -g -Og -std=c17 -Wall -Wextra -Wpedantic
 
-ast_test : ast.o parser.o tokenizer.o
+ast_test : ast.o parser.o tokenizer.o eval.o
 ast.o : parser.o tokenizer.o
 parser.o : tokenizer.o
 

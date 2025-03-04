@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "eval.h"
 #include "parser.h"
 #include "stdio.h"
 
@@ -10,6 +11,9 @@ int main(void) {
     printf("Error encountered\n");
   } else {
     ast_print(stdout, ast);
+    fputs("\n", stdout);
+    eval(ast);
+    fputs("\n", stdout);
   }
   parser_deinit(&parser);
   ast_node_free(ast);
