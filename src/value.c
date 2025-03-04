@@ -53,6 +53,7 @@ struct value cons(struct value lhs, struct value rhs) {
 
   value_set(&result.cell->lhs, lhs);
   value_set(&result.cell->rhs, rhs);
+  cons_inc_ref(result.cell);
 
   return result;
 }
