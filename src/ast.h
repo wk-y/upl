@@ -9,7 +9,7 @@ enum ast_type {
   at_invalid,
   at_statement_list,
   at_statement,
-  at_literal,
+  at_symbol,
   at_number,
 };
 
@@ -22,7 +22,7 @@ struct ast_node_statement {
   struct ast_node *lhs, *operator, * rhs;
 };
 
-struct ast_node_literal {
+struct ast_node_symbol {
   char *literal;
 };
 
@@ -34,7 +34,7 @@ struct ast_node {
   enum ast_type type;
   union {
     struct ast_node_statement statement;
-    struct ast_node_literal literal;
+    struct ast_node_symbol symbol;
     struct ast_node_number number;
     struct ast_node_statement_list statement_list;
   };

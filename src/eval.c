@@ -88,14 +88,14 @@ static struct value eval_invalid(struct interpreter *interpreter,
 
 static struct value eval_set(struct interpreter *interpreter,
                              struct ast_node *lhs, struct ast_node *rhs) {
-  if (lhs->type != at_literal) {
+  if (lhs->type != at_symbol) {
     struct value result = {.type = vt_null};
     return result;
   }
 
   struct value value = interpreter_eval(interpreter, rhs);
 
-  interpreter_set_variable(interpreter, lhs->literal.literal, value);
+  interpreter_set_variable(interpreter, lhs->symbol.literal, value);
   return value;
 }
 
@@ -206,10 +206,10 @@ void interpreter_set_variable(struct interpreter *m, char *name,
 struct value interpreter_eval(struct interpreter *interpreter,
                               struct ast_node *node) {
   switch (node->type) {
-  case at_literal: {
+  case at_symbol: {
     struct value result = {.type = vt_null};
     struct value *var =
-        interpreter_get_variable(interpreter, node->literal.literal);
+        interpreter_get_variable(interpreter, node->symbol.literal);
     if (var) {
       value_inc_ref(var);
       return *var;
@@ -223,7 +223,7 @@ struct value interpreter_eval(struct interpreter *interpreter,
   }
 
   case at_statement:
-    return lookup_func(node->statement.operator->literal.literal)(
+    return lookup_func(node->statement.operator->symbol.literal)(
         interpreter, node->statement.lhs, node->statement.rhs);
 
   case at_statement_list: {

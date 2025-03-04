@@ -7,7 +7,7 @@ enum token_type {
   tt_error,
   tt_eof,
   tt_number,
-  tt_literal,
+  tt_symbol,
   tt_lpar,
   tt_rpar,
   tt_semicolon,
