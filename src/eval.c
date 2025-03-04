@@ -99,6 +99,44 @@ static struct value eval_set(struct interpreter *interpreter,
   return value;
 }
 
+static struct value eval_lt(struct interpreter *interpreter,
+                            struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number < rvalue.number;
+  return result;
+}
+
+static struct value eval_while(struct interpreter *interpreter,
+                               struct ast_node *lhs, struct ast_node *rhs) {
+  for (;;) {
+    struct value value = interpreter_eval(interpreter, lhs);
+    if (value.type != vt_number) {
+      value_dec_ref(&value);
+      break;
+    }
+    if (!value.number) {
+      value_dec_ref(&value);
+      break;
+    }
+
+    value_dec_ref(&value);
+
+    value = interpreter_eval(interpreter, rhs);
+    value_dec_ref(&value);
+  }
+
+  struct value result = {.type = vt_null};
+  return result;
+}
+
 static struct value (*lookup_func(char *name))(struct interpreter *interpreter,
                                                struct ast_node *,
                                                struct ast_node *) {
@@ -116,6 +154,12 @@ static struct value (*lookup_func(char *name))(struct interpreter *interpreter,
   }
   if (!strcmp(name, "=")) {
     return eval_set;
+  }
+  if (!strcmp(name, "<")) {
+    return eval_lt;
+  }
+  if (!strcmp(name, "while")) {
+    return eval_while;
   }
   return eval_invalid;
 }
