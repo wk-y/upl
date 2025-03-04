@@ -24,6 +24,9 @@ bool operator_char_p(char c) {
   case '+':
   case '-':
   case '*':
+  case '=':
+  case '<':
+  case '>':
     return true;
   default:
     return false;

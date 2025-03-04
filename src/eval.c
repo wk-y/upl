@@ -72,6 +72,13 @@ static struct value eval_multiply(struct ast_node *lhs, struct ast_node *rhs) {
   return result;
 }
 
+static struct value eval_invalid(struct ast_node *lhs, struct ast_node *rhs) {
+  (void)lhs;
+  (void)rhs;
+  struct value result = {.type = vt_null};
+  return result;
+}
+
 static struct value (*lookup_func(char *name))(struct ast_node *,
                                                struct ast_node *) {
   if (!strcmp(name, "print")) {
@@ -86,7 +93,7 @@ static struct value (*lookup_func(char *name))(struct ast_node *,
   if (!strcmp(name, "*")) {
     return eval_multiply;
   }
-  return NULL;
+  return eval_invalid;
 }
 
 // The returned value will have a ref count of 1.
