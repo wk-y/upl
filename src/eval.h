@@ -17,7 +17,10 @@ struct interpreter {
 void interpreter_init(struct interpreter *);
 void interpreter_deinit(struct interpreter *);
 
-struct value *interpreter_get_variable(struct interpreter, char *name);
+// Gets the variable. Does not increment the ref count.
+struct value *interpreter_get_variable(struct interpreter *, char *name);
+void interpreter_set_variable(struct interpreter *, char *name,
+                              struct value value);
 
 struct value interpreter_eval(struct interpreter *, struct ast_node *);
 
