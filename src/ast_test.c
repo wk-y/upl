@@ -2,6 +2,7 @@
 #include "eval.h"
 #include "parser.h"
 #include "stdio.h"
+#include "value.h"
 
 int main(void) {
   struct parser parser;
@@ -12,7 +13,8 @@ int main(void) {
   } else {
     ast_print(stdout, ast);
     fputs("\n", stdout);
-    eval(ast);
+    struct value v = eval(ast);
+    value_dec_ref(&v);
     fputs("\n", stdout);
   }
   parser_deinit(&parser);

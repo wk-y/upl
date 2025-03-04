@@ -2,7 +2,8 @@
 #define EVAL_H
 
 #include "ast.h"
+#include "value.h"
 
-struct ast_node *eval(struct ast_node *);
+struct value eval(struct ast_node *);
 
 #endif

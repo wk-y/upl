@@ -1,41 +1,93 @@
 #include "eval.h"
 #include "ast.h"
+#include "value.h"
 #include <stdio.h>
 #include <string.h>
 
-static struct ast_node *eval_print(struct ast_node *lhs, struct ast_node *rhs) {
-  (void)lhs;
-  ast_print(stdout, rhs);
-  return rhs;
+static void value_print(FILE *f, struct value const value) {
+  switch (value.type) {
+  case vt_cons:
+    fputs("(", f);
+    value_print(f, value.cell->lhs);
+    fputs(", ", f);
+    value_print(f, value.cell->rhs);
+    fputs("(", f);
+    break;
+
+  case vt_null:
+    fputs("NULL", f);
+    break;
+
+  case vt_number:
+    fprintf(f, "%f", value.number);
+    break;
+
+  default:
+    fputs("???", f);
+  }
 }
 
-static struct ast_node *(*lookup_func(char *name))(struct ast_node *,
-                                                   struct ast_node *) {
+static struct value eval_print(struct ast_node *lhs, struct ast_node *rhs) {
+  struct value lvalue = eval(lhs);
+  value_dec_ref(&lvalue);
+  struct value rvalue = eval(rhs);
+  value_print(stdout, rvalue);
+  return rvalue;
+}
+
+static struct value eval_cons(struct ast_node *lhs, struct ast_node *rhs) {
+  struct value lvalue = eval(lhs);
+  struct value rvalue = eval(rhs);
+  struct value result = cons(lvalue, rvalue);
+  value_dec_ref(&lvalue);
+  value_dec_ref(&rvalue);
+  return result;
+}
+
+static struct value (*lookup_func(char *name))(struct ast_node *,
+                                               struct ast_node *) {
   if (!strcmp(name, "print")) {
     return eval_print;
+  }
+  if (!strcmp(name, ",")) {
+    return eval_cons;
   }
   return NULL;
 }
 
-struct ast_node *eval(struct ast_node *node) {
+// The returned value will have a ref count of 1.
+// Use value_dec_ref if the value is not used.
+struct value eval(struct ast_node *node) {
   switch (node->type) {
-  case at_invalid:
-    return node;
-  case at_literal:
-    return node;
-  case at_number:
-    return node;
-  case at_statement:
-    lookup_func(node->statement.operator->literal.literal)(node->statement.lhs,
-                                                           node->statement.rhs);
-    return NULL;
+  case at_literal: {
+    // not implemented
+    struct value result = {.type = vt_null};
+    return result;
+  }
 
-  case at_statement_list:
+  case at_number: {
+    struct value result = {.type = vt_number, .number = node->number.value};
+    return result;
+  }
+
+  case at_statement:
+    return lookup_func(node->statement.operator->literal.literal)(
+        node->statement.lhs, node->statement.rhs);
+
+  case at_statement_list: {
+    struct value result = {.type = vt_null};
+
     for (struct ast_node_statement_list *list = &node->statement_list; list;
          list = list->next) {
-      eval(list->statement);
+      value_dec_ref(&result);
+      result = eval(list->statement);
     }
-  default:
-    return node;
+    return result;
+  }
+  default: {
+    // todo: error?
+    struct value result = {.type = vt_null};
+    return result;
+  }
   }
 }
