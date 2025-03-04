@@ -227,7 +227,19 @@ int parse_expr(struct parser *p, struct ast_node **r) {
   case tt_number:
     return parse_atom(p, r);
   case tt_lpar:
-    return parse_statement(p, r);
+    parser_next(p);
+
+    if (parse_statement_list(p, r)) {
+      return -1;
+    }
+
+    parser_next(p);
+    if (p->tokenizer.token_type != tt_rpar) {
+      ast_node_free(*r);
+      *r = NULL;
+      return -1;
+    }
+    return 0;
   default:
     return -1;
   }
