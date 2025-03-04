@@ -55,6 +55,10 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     t->token_type = tt_rpar;
     t->literal_len = 0;
     t->literal[0] = 0;
+  } else if (c == ',') { // currently "," is a special literal
+    t->token_type = tt_literal;
+    t->literal_len = 1;
+    strcpy(t->literal, ",");
   } else if (literal_char_p(c)) {
     t->token_type = tt_literal;
     while (literal_char_p(c)) {
