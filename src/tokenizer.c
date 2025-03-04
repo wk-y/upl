@@ -36,6 +36,10 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
       ungetc(c, f);
     }
     return;
+  } else if (c == ';') {
+    t->token_type = tt_semicolon;
+    t->literal_len = 0;
+    t->literal[0] = 0;
   } else if (c == '(') {
     t->token_type = tt_lpar;
     t->literal_len = 0;

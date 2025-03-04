@@ -10,6 +10,7 @@ enum token_type {
   tt_literal,
   tt_lpar,
   tt_rpar,
+  tt_semicolon,
 };
 
 struct tokenizer {

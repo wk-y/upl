@@ -5,14 +5,14 @@
 int main(void) {
   struct parser parser;
   parser_init(&parser, stdin);
-  struct ast_node *ast = ast_node_ref(parse_ast_node(&parser));
-  parser_deinit(&parser);
-  if (ast) {
-    ast_print(stdout, ast);
+  struct ast_node *ast = NULL;
+  if (parse_statement_list(&parser, &ast)) {
+    printf("Error encountered\n");
   } else {
-    printf("No ast???\n");
+    ast_print(stdout, ast);
   }
-  ast_node_deref(ast);
+  parser_deinit(&parser);
+  ast_node_free(ast);
   fputs("\n", stdout);
 
   return 0;
