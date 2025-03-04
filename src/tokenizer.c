@@ -15,22 +15,6 @@ void tokenizer_init(struct tokenizer *t) {
 bool literal_char_p(char c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
          (c >= '0' && c <= '9');
-  ;
-}
-
-bool operator_char_p(char c) {
-  switch (c) {
-  case ',':
-  case '+':
-  case '-':
-  case '*':
-  case '=':
-  case '<':
-  case '>':
-    return true;
-  default:
-    return false;
-  }
 }
 
 void tokenizer_deinit(struct tokenizer *t) { free(t->literal); }
@@ -58,24 +42,9 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
       ungetc(c, f);
     }
     return;
-  } else if (c == ';') {
-    t->token_type = tt_semicolon;
-    strcpy(t->literal, ";");
-    t->literal_len = strlen(t->literal);
-  } else if (c == '(') {
-    t->token_type = tt_lpar;
-    strcpy(t->literal, "(");
-    t->literal_len = strlen(t->literal);
-  } else if (c == ')') {
-    t->token_type = tt_rpar;
-    strcpy(t->literal, ")");
-    t->literal_len = strlen(t->literal);
-  } else if (operator_char_p(c)) { // currently "," is a special literal
-    t->token_type = tt_symbol;
-    t->literal_len = 1;
-    t->literal[0] = c;
-    t->literal[1] = 0;
-  } else if (literal_char_p(c)) {
+  }
+
+  if (literal_char_p(c)) {
     t->token_type = tt_symbol;
     while (literal_char_p(c)) {
       t->literal[t->literal_len++] = c;
@@ -85,9 +54,44 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     if (c != EOF) {
       ungetc(c, f);
     }
-  } else {
+    return;
+  }
+
+  switch (c) {
+  case ';':
+    t->token_type = tt_semicolon;
+    strcpy(t->literal, ";");
+    t->literal_len = strlen(t->literal);
+    break;
+  case '(':
+    t->token_type = tt_lpar;
+    strcpy(t->literal, "(");
+    t->literal_len = strlen(t->literal);
+    break;
+  case ')':
+    t->token_type = tt_rpar;
+    strcpy(t->literal, ")");
+    t->literal_len = strlen(t->literal);
+    break;
+
+  case ',':
+  case '+':
+  case '-':
+  case '*':
+  case '/':
+  case '=':
+  case '<':
+  case '>':
+    t->token_type = tt_symbol;
+    t->literal_len = 1;
+    t->literal[0] = c;
+    t->literal[1] = 0;
+    break;
+
+  default:
     t->token_type = tt_error;
     strcpy(t->literal, "ERROR");
     t->literal_len = strlen(t->literal);
+    break;
   }
 }
