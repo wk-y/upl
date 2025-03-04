@@ -11,7 +11,7 @@ static void value_print(FILE *f, struct value const value) {
     value_print(f, value.cell->lhs);
     fputs(", ", f);
     value_print(f, value.cell->rhs);
-    fputs("(", f);
+    fputs(")", f);
     break;
 
   case vt_null:
