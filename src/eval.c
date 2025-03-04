@@ -28,7 +28,7 @@ struct ast_node *eval(struct ast_node *node) {
   case at_statement:
     lookup_func(node->statement.operator->literal.literal)(node->statement.lhs,
                                                            node->statement.rhs);
-    break;
+    return NULL;
 
   case at_statement_list:
     for (struct ast_node_statement_list *list = &node->statement_list; list;
