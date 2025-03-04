@@ -88,7 +88,36 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     t->literal[1] = 0;
     break;
 
+  case '"': {
+    t->token_type = tt_string;
+    bool escaping = false;
+    for (;;) {
+      c = getc(f);
+
+      if (escaping) {
+        switch (c) {
+        case 'n':
+          c = '\n';
+          break;
+        }
+      }
+
+      if (c == EOF) {
+        goto error_token;
+      }
+
+      if (c == '"' && !escaping) {
+        break;
+      }
+
+      t->literal[t->literal_len++] = c;
+      escaping = false;
+    }
+    t->literal[t->literal_len] = 0;
+    break;
+  }
   default:
+  error_token:
     t->token_type = tt_error;
     strcpy(t->literal, "ERROR");
     t->literal_len = strlen(t->literal);
