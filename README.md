@@ -8,5 +8,5 @@ Grammar:
 <statement_list> ::= <statement> [; [<statement_list>]]
 <statement> ::= <expr> [<literal> <statement>]
 <expr> ::= <atom> | "(" <statement> ")"
-<atom> ::= <literal> | <number>
+<atom> ::= <literal> | <number> | <string>
 ```

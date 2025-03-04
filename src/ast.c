@@ -1,6 +1,3 @@
-/* Grammar:
-    <node> ::= (<atom> | <lpar> <node> <rpar>) [<literal> <node>]
-*/
 #include "ast.h"
 #include "parser.h"
 #include "tokenizer.h"
@@ -36,6 +33,10 @@ void ast_node_free(struct ast_node *node) {
     free(node->symbol.literal);
     break;
 
+  case at_string:
+    free(node->string.literal);
+    break;
+
   case at_statement:
     ast_node_free(node->statement.lhs);
     ast_node_free(node->statement.rhs);
@@ -52,6 +53,7 @@ void ast_node_free(struct ast_node *node) {
       free(to_free);
     }
     break;
+
   case at_number:
   case at_invalid:
     break; // nothing to do here
@@ -65,6 +67,18 @@ struct ast_node *ast_make_number(float n) {
 
   result->type = at_number;
   result->number.value = n;
+  return result;
+}
+
+struct ast_node *ast_make_string(char const *literal) {
+  struct ast_node *result = ast_node_alloc();
+  result->type = at_string;
+
+  if (!(result->string.literal = malloc(strlen(literal) + 1))) {
+    abort();
+  }
+  strcpy(result->string.literal, literal);
+
   return result;
 }
 
@@ -96,6 +110,9 @@ void ast_print(FILE *f, struct ast_node *node) {
       ast_print(f, list->statement);
       fputs("; ", f);
     }
+    break;
+  case at_string:
+    printf("\"%s\"", node->string.literal);
     break;
   default:
     fprintf(f, "???");
@@ -132,6 +149,7 @@ static int parse_statement_list_helper(struct parser *p,
   parser_peek(p);
   switch (p->tokenizer.token_type) {
   case tt_symbol:
+  case tt_string:
   case tt_number:
   case tt_lpar:;
     if (parse_statement(p, &r->statement)) {
@@ -147,6 +165,7 @@ static int parse_statement_list_helper(struct parser *p,
     parser_peek(p);
     switch (p->tokenizer.token_type) {
     case tt_symbol:
+    case tt_string:
     case tt_number:
     case tt_lpar:
       break;
@@ -186,6 +205,7 @@ int parse_statement(struct parser *p, struct ast_node **r) {
   parser_peek(p);
   switch (p->tokenizer.token_type) {
   case tt_symbol:
+  case tt_string:
   case tt_number:
   case tt_lpar:;
     int err = parse_expr(p, r);
@@ -224,6 +244,7 @@ int parse_expr(struct parser *p, struct ast_node **r) {
   parser_peek(p);
   switch (p->tokenizer.token_type) {
   case tt_symbol:
+  case tt_string:
   case tt_number:
     return parse_atom(p, r);
   case tt_lpar:
@@ -252,6 +273,8 @@ int parse_atom(struct parser *p, struct ast_node **r) {
     return parse_number(p, r);
   case tt_symbol:
     return parse_literal(p, r);
+  case tt_string:
+    return parse_string(p, r);
   default:
     return -1;
   }
@@ -275,6 +298,17 @@ int parse_number(struct parser *p, struct ast_node **r) {
     float n;
     sscanf(p->tokenizer.literal, "%f", &n);
     *r = ast_make_number(n);
+    return 0;
+  default:
+    return -1;
+  }
+}
+
+int parse_string(struct parser *p, struct ast_node **r) {
+  parser_next(p);
+  switch (p->tokenizer.token_type) {
+  case tt_string:
+    *r = ast_make_string(p->tokenizer.literal);
     return 0;
   default:
     return -1;
