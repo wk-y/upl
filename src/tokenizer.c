@@ -68,7 +68,8 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     return;
   }
 
-  //   t->token_type = tt_error;
-  //   strcpy(t->literal, "ERROR");
-  //   t->literal_len = strlen(t->literal);
+  t->token_type = tt_error;
+  strcpy(t->literal, "ERROR");
+  t->literal_len = strlen(t->literal);
+  return;
 }
