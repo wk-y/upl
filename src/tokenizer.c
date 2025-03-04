@@ -110,8 +110,10 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
         break;
       }
 
-      t->literal[t->literal_len++] = c;
-      escaping = false;
+      escaping = !escaping && c == '\\';
+      if (!escaping) {
+        t->literal[t->literal_len++] = c;
+      }
     }
     t->literal[t->literal_len] = 0;
     break;
