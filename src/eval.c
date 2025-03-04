@@ -44,6 +44,34 @@ static struct value eval_cons(struct ast_node *lhs, struct ast_node *rhs) {
   return result;
 }
 
+static struct value eval_plus(struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = eval(lhs);
+  struct value rvalue = eval(rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number + rvalue.number;
+  return result;
+}
+
+static struct value eval_multiply(struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = eval(lhs);
+  struct value rvalue = eval(rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number * rvalue.number;
+  return result;
+}
+
 static struct value (*lookup_func(char *name))(struct ast_node *,
                                                struct ast_node *) {
   if (!strcmp(name, "print")) {
@@ -51,6 +79,12 @@ static struct value (*lookup_func(char *name))(struct ast_node *,
   }
   if (!strcmp(name, ",")) {
     return eval_cons;
+  }
+  if (!strcmp(name, "+")) {
+    return eval_plus;
+  }
+  if (!strcmp(name, "*")) {
+    return eval_multiply;
   }
   return NULL;
 }
