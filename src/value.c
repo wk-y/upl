@@ -15,10 +15,27 @@ bool cons_dec_ref(struct cons_cell *cell) {
 
 void cons_inc_ref(struct cons_cell *cell) { cell->ref_count++; }
 
+bool string_dec_ref(struct value_string *str) {
+  if (str->ref_count-- > 1) {
+    return false;
+  }
+
+  free(str->string);
+  free(str);
+
+  return true;
+}
+void string_inc_ref(struct value_string *str) { str->ref_count++; }
+
 void value_dec_ref(struct value *value) {
   switch (value->type) {
   case vt_cons:
     if (cons_dec_ref(value->cell)) {
+      value->type = vt_null;
+    }
+    break;
+  case vt_string:
+    if (string_dec_ref(value->string)) {
       value->type = vt_null;
     }
     break;
@@ -31,6 +48,9 @@ void value_inc_ref(struct value *value) {
   switch (value->type) {
   case vt_cons:
     cons_inc_ref(value->cell);
+    break;
+  case vt_string:
+    string_inc_ref(value->string);
     break;
   default:
     break;

@@ -23,6 +23,10 @@ static void value_print(FILE *f, struct value const value) {
     fprintf(f, "%f", value.number);
     break;
 
+  case vt_string:
+    fputs(value.string->string, f);
+    break;
+
   default:
     fputs("???", f);
   }
@@ -206,6 +210,18 @@ void interpreter_set_variable(struct interpreter *m, char *name,
 struct value interpreter_eval(struct interpreter *interpreter,
                               struct ast_node *node) {
   switch (node->type) {
+  case at_string: {
+    struct value result = {.type = vt_string};
+    if (!(result.string = malloc(sizeof(*result.string)))) {
+      abort();
+    }
+    if (!(result.string->string = malloc(strlen(node->string.literal) + 1))) {
+      abort();
+    }
+    result.string->ref_count = 1;
+    strcpy(result.string->string, node->string.literal);
+    return result;
+  }
   case at_symbol: {
     struct value result = {.type = vt_null};
     struct value *var =

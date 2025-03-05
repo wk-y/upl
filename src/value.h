@@ -12,10 +12,16 @@ enum value_type {
   vt_cons,
 };
 
+struct value_string {
+  char *string;
+  size_t ref_count;
+};
+
 struct value {
   enum value_type type;
   union {
     float number;
+    struct value_string *string;
     struct cons_cell *cell;
   };
 };
@@ -28,6 +34,11 @@ struct cons_cell {
 // Returns true if the cell was freed.
 bool cons_dec_ref(struct cons_cell *cell);
 void cons_inc_ref(struct cons_cell *cell);
+
+// Returns true if the string was freed.
+bool string_dec_ref(struct value_string *str);
+void string_inc_ref(struct value_string *str);
+
 struct value cons(struct value lhs, struct value rhs);
 
 // Handles ref count of contained value
