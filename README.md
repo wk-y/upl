@@ -5,8 +5,8 @@ This is a toy programming language.
 Grammar:
 
 ```
-<statement_list> ::= <statement> [; [<statement_list>]]
-<statement> ::= <expr> [<literal> <statement>]
+<statement_list> ::= <statement> [<semicolon> [<statement_list>]]
+<statement> ::= <expr> [<symbol> <statement>]
 <expr> ::= <atom> | "(" <statement> ")"
-<atom> ::= <literal> | <number> | <string>
+<atom> ::= <symbol> | <number> | <string>
 ```

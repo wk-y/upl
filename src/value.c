@@ -77,3 +77,30 @@ struct value cons(struct value lhs, struct value rhs) {
 
   return result;
 }
+
+void value_print(FILE *f, struct value const value) {
+  switch (value.type) {
+  case vt_cons:
+    fputs("(", f);
+    value_print(f, value.cell->lhs);
+    fputs(", ", f);
+    value_print(f, value.cell->rhs);
+    fputs(")", f);
+    break;
+
+  case vt_null:
+    fputs("NULL", f);
+    break;
+
+  case vt_number:
+    fprintf(f, "%f", value.number);
+    break;
+
+  case vt_string:
+    fputs(value.string->string, f);
+    break;
+
+  default:
+    fputs("???", f);
+  }
+}

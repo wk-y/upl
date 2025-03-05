@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 enum value_type {
   vt_null,
@@ -47,5 +48,7 @@ void value_inc_ref(struct value *value);
 
 // Turn the left value into the right value
 void value_set(struct value *dst, struct value src);
+
+void value_print(FILE *, struct value const);
 
 #endif

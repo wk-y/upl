@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CASE_FIRST_STRING case tt_string:
+#define CASE_FIRST_NUMBER case tt_number:
+#define CASE_FIRST_SYMBOL case tt_symbol:
+#define CASE_FIRST_ATOM CASE_FIRST_SYMBOL CASE_FIRST_NUMBER CASE_FIRST_STRING
+#define CASE_FIRST_EXPR CASE_FIRST_ATOM case tt_lpar:
+#define CASE_FIRST_STATEMENT CASE_FIRST_EXPR
+#define CASE_FIRST_STATEMENT_LIST CASE_FIRST_STATEMENT
+
 // Allocate an AST node
 static struct ast_node *ast_node_alloc(void) {
   struct ast_node t = {0};
@@ -148,10 +156,7 @@ static int parse_statement_list_helper(struct parser *p,
 
   parser_peek(p);
   switch (p->tokenizer.token_type) {
-  case tt_symbol:
-  case tt_string:
-  case tt_number:
-  case tt_lpar:;
+    CASE_FIRST_STATEMENT
     if (parse_statement(p, &r->statement)) {
       return -1;
     }
@@ -164,10 +169,7 @@ static int parse_statement_list_helper(struct parser *p,
 
     parser_peek(p);
     switch (p->tokenizer.token_type) {
-    case tt_symbol:
-    case tt_string:
-    case tt_number:
-    case tt_lpar:
+      CASE_FIRST_STATEMENT_LIST
       break;
     default:
       return 0;
@@ -204,10 +206,7 @@ int parse_statement_list(struct parser *p, struct ast_node **r) {
 int parse_statement(struct parser *p, struct ast_node **r) {
   parser_peek(p);
   switch (p->tokenizer.token_type) {
-  case tt_symbol:
-  case tt_string:
-  case tt_number:
-  case tt_lpar:;
+    CASE_FIRST_EXPR;
     int err = parse_expr(p, r);
     if (err) {
       return err;
@@ -243,9 +242,7 @@ int parse_statement(struct parser *p, struct ast_node **r) {
 int parse_expr(struct parser *p, struct ast_node **r) {
   parser_peek(p);
   switch (p->tokenizer.token_type) {
-  case tt_symbol:
-  case tt_string:
-  case tt_number:
+    CASE_FIRST_ATOM
     return parse_atom(p, r);
   case tt_lpar:
     parser_next(p);
@@ -269,11 +266,11 @@ int parse_expr(struct parser *p, struct ast_node **r) {
 int parse_atom(struct parser *p, struct ast_node **r) {
   parser_peek(p);
   switch (p->tokenizer.token_type) {
-  case tt_number:
+    CASE_FIRST_NUMBER
     return parse_number(p, r);
-  case tt_symbol:
+    CASE_FIRST_SYMBOL
     return parse_literal(p, r);
-  case tt_string:
+    CASE_FIRST_STRING
     return parse_string(p, r);
   default:
     return -1;
