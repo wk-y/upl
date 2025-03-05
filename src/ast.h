@@ -45,13 +45,15 @@ struct ast_node {
   };
 };
 
-struct ast_node *ast_make_number(float);
-struct ast_node *ast_make_literal(char const *);
-struct ast_node *ast_make_string(char const *);
-struct ast_node *ast_make_compound_statement(struct ast_node *operator,
+struct ast_node *ast_make_number(struct ast_node *dst, float);
+struct ast_node *ast_make_literal(struct ast_node *dst, char const *);
+struct ast_node *ast_make_string(struct ast_node *dst, char const *);
+struct ast_node *ast_make_compound_statement(struct ast_node *dst,
+                                             struct ast_node *operator,
                                              struct ast_node * lhs,
                                              struct ast_node *rhs);
 
+struct ast_node *ast_deep_copy(struct ast_node *, struct ast_node *);
 void ast_node_free(struct ast_node *);
 
 void ast_print(FILE *, struct ast_node *);

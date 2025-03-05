@@ -69,24 +69,60 @@ void ast_node_free(struct ast_node *node) {
   free(node);
 }
 
-struct ast_node *ast_make_number(float n) {
-  struct ast_node *result = ast_node_alloc();
+struct ast_node *ast_make_number(struct ast_node *dst, float n) {
+  dst->type = at_number;
+  dst->number.value = n;
+  return dst;
+}
 
-  result->type = at_number;
-  result->number.value = n;
+struct ast_node *ast_make_string(struct ast_node *dst, char const *literal) {
+  dst->type = at_string;
+
+  if (!(dst->string.literal = malloc(strlen(literal) + 1))) {
+    abort();
+  }
+  strcpy(dst->string.literal, literal);
+
+  return dst;
+}
+
+static struct ast_node_statement_list *
+ast_deep_copy_statement_list(struct ast_node_statement_list *list) {
+  if (!list) {
+    return NULL;
+  }
+
+  struct ast_node_statement_list *result = malloc(sizeof(*result));
+  if (!result) {
+    abort();
+  }
+  result->statement = NULL;
+  ast_deep_copy(result->statement, list->statement);
+  result->next = ast_deep_copy_statement_list(list->next);
   return result;
 }
 
-struct ast_node *ast_make_string(char const *literal) {
-  struct ast_node *result = ast_node_alloc();
-  result->type = at_string;
-
-  if (!(result->string.literal = malloc(strlen(literal) + 1))) {
-    abort();
+struct ast_node *ast_deep_copy(struct ast_node *dst, struct ast_node *node) {
+  switch (node->type) {
+  case at_number:
+    return ast_make_number(dst, node->number.value);
+  case at_string:
+    return ast_make_string(dst, node->string.literal);
+  case at_statement:
+    return ast_make_compound_statement(dst, node->statement.operator,
+                                       node->statement.lhs,
+                                       node->statement.rhs);
+  case at_symbol:
+    return ast_make_literal(dst, node->symbol.literal);
+  case at_statement_list:;
+    dst->type = at_statement_list;
+    ast_deep_copy(dst->statement_list.statement,
+                  node->statement_list.statement);
+    dst->statement_list.next =
+        ast_deep_copy_statement_list(node->statement_list.next);
+    return dst;
   }
-  strcpy(result->string.literal, literal);
-
-  return result;
+  abort();
 }
 
 void ast_print(FILE *f, struct ast_node *node) {
@@ -126,27 +162,26 @@ void ast_print(FILE *f, struct ast_node *node) {
   }
 }
 
-struct ast_node *ast_make_compound_statement(struct ast_node *operator,
+struct ast_node *ast_make_compound_statement(struct ast_node *dst,
+                                             struct ast_node *operator,
                                              struct ast_node * lhs,
                                              struct ast_node *rhs) {
-  struct ast_node *result = ast_node_alloc();
-  result->type = at_statement;
-  result->statement.lhs = lhs;
-  result->statement.rhs = rhs;
-  result->statement.operator= operator;
-  return result;
+  dst->type = at_statement;
+  dst->statement.lhs = lhs;
+  dst->statement.rhs = rhs;
+  dst->statement.operator= operator;
+  return dst;
 }
 
-struct ast_node *ast_make_literal(char const *literal) {
-  struct ast_node *result = ast_node_alloc();
-  result->type = at_symbol;
+struct ast_node *ast_make_literal(struct ast_node *dst, char const *literal) {
+  dst->type = at_symbol;
 
-  if (!(result->symbol.literal = malloc(strlen(literal) + 1))) {
+  if (!(dst->symbol.literal = malloc(strlen(literal) + 1))) {
     abort();
   }
-  strcpy(result->symbol.literal, literal);
+  strcpy(dst->symbol.literal, literal);
 
-  return result;
+  return dst;
 }
 static int parse_statement_list_helper(struct parser *p,
                                        struct ast_node_statement_list *r) {
@@ -231,7 +266,7 @@ int parse_statement(struct parser *p, struct ast_node **r) {
       return err;
     }
 
-    *r = ast_make_compound_statement(operator, * r, rhs);
+    *r = ast_make_compound_statement(ast_node_alloc(), operator, * r, rhs);
     return 0;
   default:
     return -1;
@@ -280,7 +315,7 @@ int parse_literal(struct parser *p, struct ast_node **r) {
   parser_next(p);
   switch (p->tokenizer.token_type) {
   case tt_symbol:
-    *r = ast_make_literal(p->tokenizer.literal);
+    *r = ast_make_literal(ast_node_alloc(), p->tokenizer.literal);
     return 0;
   default:
     return -1;
@@ -293,7 +328,7 @@ int parse_number(struct parser *p, struct ast_node **r) {
   case tt_number:;
     float n;
     sscanf(p->tokenizer.literal, "%f", &n);
-    *r = ast_make_number(n);
+    *r = ast_make_number(ast_node_alloc(), n);
     return 0;
   default:
     return -1;
@@ -304,7 +339,7 @@ int parse_string(struct parser *p, struct ast_node **r) {
   parser_next(p);
   switch (p->tokenizer.token_type) {
   case tt_string:
-    *r = ast_make_string(p->tokenizer.literal);
+    *r = ast_make_string(ast_node_alloc(), p->tokenizer.literal);
     return 0;
   default:
     return -1;
