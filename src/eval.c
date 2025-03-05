@@ -51,6 +51,19 @@ static struct value eval_cons(struct interpreter *interpreter,
   return result;
 }
 
+static struct value eval_and(struct interpreter *interpreter,
+                             struct ast_node *lhs, struct ast_node *rhs) {
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  struct value null = {.type = vt_null};
+  struct value tail = cons(rvalue, null);
+  struct value result = cons(lvalue, tail);
+  value_dec_ref(&tail);
+  value_dec_ref(&lvalue);
+  value_dec_ref(&rvalue);
+  return result;
+}
+
 static struct value eval_plus(struct interpreter *interpreter,
                               struct ast_node *lhs, struct ast_node *rhs) {
   struct value result = {.type = vt_null};
@@ -149,6 +162,9 @@ static struct value (*lookup_func(char *name))(struct interpreter *interpreter,
   }
   if (!strcmp(name, ",")) {
     return eval_cons;
+  }
+  if (!strcmp(name, "and")) {
+    return eval_and;
   }
   if (!strcmp(name, "+")) {
     return eval_plus;
