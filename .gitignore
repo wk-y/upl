@@ -5,5 +5,5 @@
 *.d
 
 # executables
-ast_test
-tokenizer_test
+/upl
+/tokenizer_test

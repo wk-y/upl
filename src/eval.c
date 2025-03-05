@@ -5,33 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void value_print(FILE *f, struct value const value) {
-  switch (value.type) {
-  case vt_cons:
-    fputs("(", f);
-    value_print(f, value.cell->lhs);
-    fputs(", ", f);
-    value_print(f, value.cell->rhs);
-    fputs(")", f);
-    break;
-
-  case vt_null:
-    fputs("NULL", f);
-    break;
-
-  case vt_number:
-    fprintf(f, "%f", value.number);
-    break;
-
-  case vt_string:
-    fputs(value.string->string, f);
-    break;
-
-  default:
-    fputs("???", f);
-  }
-}
-
 static struct value eval_print(struct interpreter *interpreter,
                                struct ast_node *lhs, struct ast_node *rhs) {
   struct value lvalue = interpreter_eval(interpreter, lhs);
