@@ -1,7 +1,0 @@
-x = 1;
-(x < 1000) while (
-    ,print "x = ";
-    ,print x;
-    ,print "\n";
-    x = x * 2;
-);
