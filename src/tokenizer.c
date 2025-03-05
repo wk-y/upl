@@ -10,6 +10,8 @@ void tokenizer_init(struct tokenizer *t) {
   if (!(t->literal = malloc(t->literal_cap))) {
     abort();
   };
+  t->line = 1;
+  t->column = 0;
 }
 
 bool literal_char_p(char c) {
@@ -17,12 +19,41 @@ bool literal_char_p(char c) {
          (c >= '0' && c <= '9');
 }
 
+static int tokenizer_getc(struct tokenizer *t, FILE *f) {
+  int c = getc(f);
+  if (c == '\n') {
+    t->line++;
+    t->_prev_column = t->column;
+    t->column = 0;
+  } else {
+    // todo: Handle variable width ('\t').
+    t->column += 1;
+  }
+  return c;
+}
+
+static int tokenizer_ungetc(struct tokenizer *t, int c, FILE *f) {
+  int ret = ungetc(c, f);
+  if (c == '\n') {
+    t->line--;
+    t->column = t->_prev_column;
+    t->_prev_column = -1; // missing value
+  } else {
+    // todo: Handle variable width ('\t').
+    t->column -= 1;
+  }
+  return ret;
+}
+
 void tokenizer_deinit(struct tokenizer *t) { free(t->literal); }
 void tokenizer_feed(struct tokenizer *t, FILE *f) {
+#define TGETC(f) tokenizer_getc(t, f)
+#define TUNGETC(c, f) tokenizer_ungetc(t, c, f)
+
   t->literal_len = 0;
   int c;
   do {
-    c = getc(f);
+    c = TGETC(f);
   } while (c == ' ' || c == '\t' || c == '\n');
 
   if (c == EOF) {
@@ -35,11 +66,11 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     t->token_type = tt_number;
     while (c >= '0' && c <= '9') {
       t->literal[t->literal_len++] = c;
-      c = getc(f);
+      c = TGETC(f);
     }
     t->literal[t->literal_len] = 0;
     if (c != EOF) {
-      ungetc(c, f);
+      TUNGETC(c, f);
     }
     return;
   }
@@ -48,11 +79,11 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     t->token_type = tt_symbol;
     while (literal_char_p(c)) {
       t->literal[t->literal_len++] = c;
-      c = getc(f);
+      c = TGETC(f);
     }
     t->literal[t->literal_len] = 0;
     if (c != EOF) {
-      ungetc(c, f);
+      TUNGETC(c, f);
     }
     return;
   }
@@ -92,7 +123,7 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     t->token_type = tt_string;
     bool escaping = false;
     for (;;) {
-      c = getc(f);
+      c = TGETC(f);
 
       if (escaping) {
         switch (c) {
@@ -125,4 +156,7 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     t->literal_len = strlen(t->literal);
     break;
   }
+
+#undef TGETC
+#undef TUNGETC
 }

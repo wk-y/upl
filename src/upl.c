@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "tokenizer.h"
 #include "value.h"
+#include <string.h>
 
 int run_repl(void);
 int run_script(char *filename);
@@ -61,7 +62,24 @@ int run_script(char *filename) {
   parser_init(&parser, input_file);
   struct ast_node *ast = NULL;
   if (parse_statement_list(&parser, &ast)) {
-    printf("Failed to parse\n");
+    fprintf(stderr, "%s:%zu:%zu: Parse error\n", filename,
+            parser.tokenizer.line, parser.tokenizer.column);
+
+    if (!fseek(input_file, -parser.tokenizer.column, SEEK_CUR)) {
+      for (;;) {
+        int c = getc(input_file);
+        if (c == EOF || c == '\n') {
+          break;
+        }
+        fputc(c, stderr);
+      }
+      fputc('\n', stderr);
+      for (size_t i = 0;
+           i < parser.tokenizer.column - parser.tokenizer.literal_len; i++) {
+        fputc(' ', stderr);
+      }
+      fprintf(stderr, "^ Unexpected \"%s\"\n", parser.tokenizer.literal);
+    }
   } else {
     struct value v = eval(ast);
     value_dec_ref(&v);
