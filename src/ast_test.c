@@ -15,11 +15,10 @@ int main(void) {
     fputs("\n", stdout);
     struct value v = eval(ast);
     value_dec_ref(&v);
-    fputs("\n", stdout);
   }
+
   parser_deinit(&parser);
   ast_node_free(ast);
-  fputs("\n", stdout);
 
   return 0;
 }
