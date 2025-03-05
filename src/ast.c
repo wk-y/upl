@@ -63,7 +63,6 @@ void ast_node_free(struct ast_node *node) {
     break;
 
   case at_number:
-  case at_invalid:
     break; // nothing to do here
   }
 

@@ -21,6 +21,9 @@ int main(int argc, char *argv[]) {
 }
 
 int run_repl(void) {
+  struct interpreter interpreter;
+  interpreter_init(&interpreter);
+
   for (;;) {
     fputs("$ ", stdout);
     // Read
@@ -33,7 +36,7 @@ int run_repl(void) {
     }
 
     // Eval
-    struct value v = eval(ast);
+    struct value v = interpreter_eval(&interpreter, ast);
 
     // Print
     if (v.type != vt_null) {
@@ -45,10 +48,11 @@ int run_repl(void) {
     value_dec_ref(&v);
 
   cleanup_read:
-    value_dec_ref(&v);
     parser_deinit(&parser);
     ast_node_free(ast);
   }
+
+  interpreter_deinit(&interpreter);
   return 0;
 }
 

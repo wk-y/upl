@@ -1,16 +1,20 @@
 #ifndef VALUE_H
 #define VALUE_H
 
+#include "ast.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 
+struct interpreter; // todo: reorganize to eliminate forward decl
+
 enum value_type {
   vt_null,
   vt_number,
-  vt_literal,
   vt_string,
   vt_cons,
+  vt_cfunc,
+  vt_error,
 };
 
 struct value_string {
@@ -24,6 +28,8 @@ struct value {
     float number;
     struct value_string *string;
     struct cons_cell *cell;
+    struct value (*cfunc)(struct interpreter *, struct ast_node *,
+                          struct ast_node *);
   };
 };
 
