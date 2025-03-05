@@ -19,6 +19,8 @@ struct tokenizer {
   char *literal;
   size_t literal_len;
   size_t literal_cap;
+  size_t line;
+  size_t column, _prev_column;
 };
 
 void tokenizer_init(struct tokenizer *);
