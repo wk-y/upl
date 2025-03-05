@@ -1,167 +1,21 @@
 #include "eval.h"
 #include "ast.h"
+#include "builtins.h"
 #include "value.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static struct value eval_print(struct interpreter *interpreter,
-                               struct ast_node *lhs, struct ast_node *rhs) {
-  struct value lvalue = interpreter_eval(interpreter, lhs);
-  value_dec_ref(&lvalue);
-  struct value rvalue = interpreter_eval(interpreter, rhs);
-  value_print(stdout, rvalue);
-  return rvalue;
+void interpreter_init(struct interpreter *m) {
+  m->variables = NULL;
+  builtins_load_all(m);
 }
 
-static struct value eval_cons(struct interpreter *interpreter,
-                              struct ast_node *lhs, struct ast_node *rhs) {
-  struct value lvalue = interpreter_eval(interpreter, lhs);
-  struct value rvalue = interpreter_eval(interpreter, rhs);
-  struct value result = cons(lvalue, rvalue);
-  value_dec_ref(&lvalue);
-  value_dec_ref(&rvalue);
-  return result;
-}
-
-static struct value eval_and(struct interpreter *interpreter,
-                             struct ast_node *lhs, struct ast_node *rhs) {
-  struct value lvalue = interpreter_eval(interpreter, lhs);
-  struct value rvalue = interpreter_eval(interpreter, rhs);
-  struct value null = {.type = vt_null};
-  struct value tail = cons(rvalue, null);
-  struct value result = cons(lvalue, tail);
-  value_dec_ref(&tail);
-  value_dec_ref(&lvalue);
-  value_dec_ref(&rvalue);
-  return result;
-}
-
-static struct value eval_plus(struct interpreter *interpreter,
-                              struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
-  struct value lvalue = interpreter_eval(interpreter, lhs);
-  struct value rvalue = interpreter_eval(interpreter, rhs);
-  if (lvalue.type != vt_number || rvalue.type != vt_number) {
-    value_dec_ref(&lvalue);
-    value_dec_ref(&rvalue);
-    return result;
-  }
-  result.type = vt_number;
-  result.number = lvalue.number + rvalue.number;
-  return result;
-}
-
-static struct value eval_multiply(struct interpreter *interpreter,
-                                  struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
-  struct value lvalue = interpreter_eval(interpreter, lhs);
-  struct value rvalue = interpreter_eval(interpreter, rhs);
-  if (lvalue.type != vt_number || rvalue.type != vt_number) {
-    value_dec_ref(&lvalue);
-    value_dec_ref(&rvalue);
-    return result;
-  }
-  result.type = vt_number;
-  result.number = lvalue.number * rvalue.number;
-  return result;
-}
-
-static struct value eval_invalid(struct interpreter *interpreter,
-                                 struct ast_node *lhs, struct ast_node *rhs) {
-  (void)interpreter;
-  (void)lhs;
-  (void)rhs;
-  struct value result = {.type = vt_null};
-  return result;
-}
-
-static struct value eval_set(struct interpreter *interpreter,
-                             struct ast_node *lhs, struct ast_node *rhs) {
-  if (lhs->type != at_symbol) {
-    struct value result = {.type = vt_null};
-    return result;
-  }
-
-  struct value value = interpreter_eval(interpreter, rhs);
-
-  interpreter_set_variable(interpreter, lhs->symbol.literal, value);
-  return value;
-}
-
-static struct value eval_lt(struct interpreter *interpreter,
-                            struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
-  struct value lvalue = interpreter_eval(interpreter, lhs);
-  struct value rvalue = interpreter_eval(interpreter, rhs);
-  if (lvalue.type != vt_number || rvalue.type != vt_number) {
-    value_dec_ref(&lvalue);
-    value_dec_ref(&rvalue);
-    return result;
-  }
-  result.type = vt_number;
-  result.number = lvalue.number < rvalue.number;
-  return result;
-}
-
-static struct value eval_while(struct interpreter *interpreter,
-                               struct ast_node *lhs, struct ast_node *rhs) {
-  for (;;) {
-    struct value value = interpreter_eval(interpreter, lhs);
-    if (value.type != vt_number) {
-      value_dec_ref(&value);
-      break;
-    }
-    if (!value.number) {
-      value_dec_ref(&value);
-      break;
-    }
-
-    value_dec_ref(&value);
-
-    value = interpreter_eval(interpreter, rhs);
-    value_dec_ref(&value);
-  }
-
-  struct value result = {.type = vt_null};
-  return result;
-}
-
-static struct value (*lookup_func(char *name))(struct interpreter *interpreter,
-                                               struct ast_node *,
-                                               struct ast_node *) {
-  if (!strcmp(name, "print")) {
-    return eval_print;
-  }
-  if (!strcmp(name, ",")) {
-    return eval_cons;
-  }
-  if (!strcmp(name, "and")) {
-    return eval_and;
-  }
-  if (!strcmp(name, "+")) {
-    return eval_plus;
-  }
-  if (!strcmp(name, "*")) {
-    return eval_multiply;
-  }
-  if (!strcmp(name, "=")) {
-    return eval_set;
-  }
-  if (!strcmp(name, "<")) {
-    return eval_lt;
-  }
-  if (!strcmp(name, "while")) {
-    return eval_while;
-  }
-  return eval_invalid;
-}
-
-void interpreter_init(struct interpreter *m) { m->variables = NULL; }
 void interpreter_deinit(struct interpreter *m) {
   while (m->variables) {
     struct variables *v = m->variables;
     m->variables = m->variables->next;
+    free(v->name);
     value_dec_ref(&v->value);
     free(v);
   }
@@ -185,7 +39,11 @@ void interpreter_set_variable(struct interpreter *m, char *name,
       abort();
     }
 
-    new_variable->name = name;
+    new_variable->name = malloc(strlen(name) + 1);
+    if (!new_variable->name) {
+      abort();
+    }
+    strcpy(new_variable->name, name);
     new_variable->value.type = vt_null;
     new_variable->next = m->variables;
     m->variables = new_variable;
@@ -211,6 +69,7 @@ struct value interpreter_eval(struct interpreter *interpreter,
     strcpy(result.string->string, node->string.literal);
     return result;
   }
+
   case at_symbol: {
     struct value result = {.type = vt_null};
     struct value *var =
@@ -218,6 +77,9 @@ struct value interpreter_eval(struct interpreter *interpreter,
     if (var) {
       value_inc_ref(var);
       return *var;
+    } else {
+      struct value result = {.type = vt_error};
+      return result;
     }
     return result;
   }
@@ -227,9 +89,15 @@ struct value interpreter_eval(struct interpreter *interpreter,
     return result;
   }
 
-  case at_statement:
-    return lookup_func(node->statement.operator->symbol.literal)(
-        interpreter, node->statement.lhs, node->statement.rhs);
+  case at_statement:;
+    struct value *func = interpreter_get_variable(
+        interpreter, node->statement.operator->symbol.literal);
+    if (!func || func->type != vt_cfunc) {
+      struct value result = {.type = vt_error};
+      return result;
+    }
+
+    return func->cfunc(interpreter, node->statement.lhs, node->statement.rhs);
 
   case at_statement_list: {
     struct value result = {.type = vt_null};
@@ -241,12 +109,8 @@ struct value interpreter_eval(struct interpreter *interpreter,
     }
     return result;
   }
-  default: {
-    // todo: error?
-    struct value result = {.type = vt_null};
-    return result;
   }
-  }
+  abort();
 }
 
 struct value eval(struct ast_node *ast) {

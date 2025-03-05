@@ -100,7 +100,12 @@ void value_print(FILE *f, struct value const value) {
     fputs(value.string->string, f);
     break;
 
-  default:
-    fputs("???", f);
+  case vt_error:
+    fputs("Error", f);
+    break;
+
+  case vt_cfunc:
+    fputs("<c function>", f);
+    break;
   }
 }

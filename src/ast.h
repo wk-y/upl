@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 enum ast_type {
-  at_invalid,
   at_statement_list,
   at_statement,
   at_symbol,
