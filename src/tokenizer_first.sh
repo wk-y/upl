@@ -23,7 +23,7 @@ cat << 'EOF'
 EOF
 
 print_first "WHIESPACE" ' ' '\t' '\n'
-print_first "SYMBOL" + - \* / \, \= \! \< \>
+print_first "SYMBOL" + - \* / \, \= \! \< \> :
 print_first "LITERAL" {a..z} {A..Z} _
 print_first "DIGITS" {0..9}
 print_first "LPAR" '('
