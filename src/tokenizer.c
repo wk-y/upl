@@ -4,6 +4,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../tokenizer_first.h"
+
+static void tok_write_char(struct tokenizer *t, char c);
+static int tokenizer_peek(struct tokenizer *t);
+static int tokenizer_next(struct tokenizer *t);
+
+static int tok_parse(struct tokenizer *t);
+static int tok_parse_float(struct tokenizer *t);
+static int tok_parse_digits(struct tokenizer *t);
+static int tok_parse_literal(struct tokenizer *t);
+static int tok_parse_symbol(struct tokenizer *t);
+static int tok_parse_string(struct tokenizer *t);
+
 void tokenizer_init(struct tokenizer *t) {
   t->literal_len = 0;
   t->literal_cap = 1024;
@@ -14,166 +27,182 @@ void tokenizer_init(struct tokenizer *t) {
   t->column = 0;
 }
 
-static bool literal_char_p(char c) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-         (c >= '0' && c <= '9') || (c == '_');
-}
-
-static bool op_literal_char_p(char c) {
-  switch (c) {
-  case ',':
-  case '+':
-  case '-':
-  case '*':
-  case '/':
-  case '=':
-  case '<':
-  case '>':
-    return true;
-  default:
-    return false;
+static int tokenizer_peek(struct tokenizer *t) {
+  if (!t->peeking) {
+    t->peeking = true;
+    t->_peeked = getc(t->_file);
   }
+  return t->_peeked;
 }
 
-static int tokenizer_getc(struct tokenizer *t, FILE *f) {
-  int c = getc(f);
+static int tokenizer_next(struct tokenizer *t) {
+  int c = tokenizer_peek(t);
+  t->peeking = false;
+
   if (c == '\n') {
     t->line++;
-    t->_prev_column = t->column;
     t->column = 0;
   } else {
     // todo: Handle variable width ('\t').
     t->column += 1;
   }
   return c;
-}
 
-static int tokenizer_ungetc(struct tokenizer *t, int c, FILE *f) {
-  int ret = ungetc(c, f);
-  if (c == '\n') {
-    t->line--;
-    t->column = t->_prev_column;
-    t->_prev_column = -1; // missing value
-  } else {
-    // todo: Handle variable width ('\t').
-    t->column -= 1;
-  }
-  return ret;
+  return c;
 }
 
 void tokenizer_deinit(struct tokenizer *t) { free(t->literal); }
 void tokenizer_feed(struct tokenizer *t, FILE *f) {
-#define TGETC(f) tokenizer_getc(t, f)
-#define TUNGETC(c, f) tokenizer_ungetc(t, c, f)
-
   t->literal_len = 0;
-  int c;
-  do {
-    c = TGETC(f);
-  } while (c == ' ' || c == '\t' || c == '\n');
-
-  if (c == EOF) {
-    t->token_type = tt_eof;
-    t->literal[0] = 0;
-    return;
-  }
-
-  if (c >= '0' && c <= '9') {
-    t->token_type = tt_number;
-    while (c >= '0' && c <= '9') {
-      t->literal[t->literal_len++] = c;
-      c = TGETC(f);
-    }
-    t->literal[t->literal_len] = 0;
-    if (c != EOF) {
-      TUNGETC(c, f);
-    }
-    return;
-  }
-
-  if (literal_char_p(c)) {
-    t->token_type = tt_symbol;
-    while (literal_char_p(c)) {
-      t->literal[t->literal_len++] = c;
-      c = TGETC(f);
-    }
-    t->literal[t->literal_len] = 0;
-    if (c != EOF) {
-      TUNGETC(c, f);
-    }
-    return;
-  }
-
-  if (op_literal_char_p(c)) {
-    t->token_type = tt_symbol;
-    while (op_literal_char_p(c)) {
-      t->literal[t->literal_len++] = c;
-      c = TGETC(f);
-    }
-    t->literal[t->literal_len] = 0;
-    if (c != EOF) {
-      TUNGETC(c, f);
-    }
-    return;
-  }
-
-  switch (c) {
-  case ';':
-    t->token_type = tt_semicolon;
-    strcpy(t->literal, ";");
-    t->literal_len = strlen(t->literal);
-    break;
-
-  case '(':
-    t->token_type = tt_lpar;
-    strcpy(t->literal, "(");
-    t->literal_len = strlen(t->literal);
-    break;
-
-  case ')':
-    t->token_type = tt_rpar;
-    strcpy(t->literal, ")");
-    t->literal_len = strlen(t->literal);
-    break;
-
-  case '"': {
-    t->token_type = tt_string;
-    bool escaping = false;
-    for (;;) {
-      c = TGETC(f);
-
-      if (escaping) {
-        switch (c) {
-        case 'n':
-          c = '\n';
-          break;
-        }
-      }
-
-      if (c == EOF) {
-        goto error_token;
-      }
-
-      if (c == '"' && !escaping) {
-        break;
-      }
-
-      escaping = !escaping && c == '\\';
-      if (!escaping) {
-        t->literal[t->literal_len++] = c;
-      }
-    }
-    t->literal[t->literal_len] = 0;
-    break;
-  }
-  default:
-  error_token:
+  t->literal[0] = 0;
+  t->_file = f;
+  if (tok_parse(t)) {
     t->token_type = tt_error;
-    strcpy(t->literal, "ERROR");
-    t->literal_len = strlen(t->literal);
-    break;
   }
+  t->_file = NULL;
+  if (t->peeking) {
+    t->peeking = false;
+    ungetc(t->_peeked, f);
+  }
+  t->literal[t->literal_len] = 0;
+}
 
-#undef TGETC
-#undef TUNGETC
+static void tok_write_char(struct tokenizer *t, char c) {
+  t->literal[t->literal_len++] = c;
+  if (t->literal_len >= t->literal_cap) {
+    size_t new_cap = t->literal_cap * 2;
+    char *new_lit = realloc(t->literal, new_cap);
+    if (!new_lit) {
+      abort();
+    }
+    t->literal = new_lit;
+    t->literal_cap = new_cap;
+  }
+}
+
+static int tok_parse(struct tokenizer *t) {
+  switch (tokenizer_peek(t)) {
+    CASE_FIRST_WHIESPACE;
+    tokenizer_next(t);
+    return tok_parse(t);
+
+    CASE_FIRST_SYMBOL;
+    return tok_parse_symbol(t);
+
+    CASE_FIRST_LITERAL;
+    return tok_parse_literal(t);
+
+    CASE_FIRST_FLOAT;
+    return tok_parse_float(t);
+
+    CASE_FIRST_LPAR;
+    tok_write_char(t, tokenizer_next(t));
+    t->token_type = tt_lpar;
+    return 0;
+
+    CASE_FIRST_RPAR;
+    tok_write_char(t, tokenizer_next(t));
+    t->token_type = tt_rpar;
+    return 0;
+
+    CASE_FIRST_SEMICOLON;
+    tok_write_char(t, tokenizer_next(t));
+    t->token_type = tt_semicolon;
+    return 0;
+
+    CASE_FIRST_STRING;
+    return tok_parse_string(t);
+
+  case EOF:
+    t->token_type = tt_eof;
+    return 0;
+
+  default:
+    return -1;
+  }
+}
+
+static int tok_parse_float(struct tokenizer *t) {
+  if (tok_parse_digits(t)) {
+    return -1;
+  }
+  if (tokenizer_peek(t) != '.') {
+    t->token_type = tt_number;
+    return 0;
+  }
+  return tok_parse_digits(t);
+}
+
+static int tok_parse_digits(struct tokenizer *t) {
+  for (;;) {
+    switch (tokenizer_peek(t)) {
+      CASE_FIRST_DIGITS;
+      tok_write_char(t, tokenizer_next(t));
+      break;
+
+    default:
+      return 0;
+    }
+  }
+}
+
+static int tok_parse_literal(struct tokenizer *t) {
+  for (;;) {
+    switch (tokenizer_peek(t)) {
+      CASE_FIRST_LITERAL;
+      tok_write_char(t, tokenizer_next(t));
+      break;
+    default:
+      t->token_type = tt_symbol;
+      return 0;
+    }
+  }
+}
+
+static int tok_parse_symbol(struct tokenizer *t) {
+  for (;;) {
+    switch (tokenizer_peek(t)) {
+      CASE_FIRST_SYMBOL;
+      tok_write_char(t, tokenizer_next(t));
+      break;
+    default:
+      t->token_type = tt_symbol;
+      return 0;
+    }
+  }
+}
+
+static int tok_parse_string(struct tokenizer *t) {
+  if (tokenizer_peek(t) != '"' || tokenizer_peek(t) == EOF) {
+    return -1;
+  }
+  tokenizer_next(t);
+
+  for (;;) {
+    switch (tokenizer_peek(t)) {
+    case EOF:
+      return -1;
+
+    case '"':
+      tokenizer_next(t);
+      t->token_type = tt_string;
+      return 0;
+
+    case '\\':
+      tokenizer_next(t);
+      switch (tokenizer_peek(t)) {
+      case 'n':
+        tokenizer_next(t);
+        tok_write_char(t, '\n');
+        break;
+
+      default:
+        tok_write_char(t, tokenizer_next(t));
+      }
+      break;
+
+    default:
+      tok_write_char(t, tokenizer_next(t));
+    }
+  }
 }
