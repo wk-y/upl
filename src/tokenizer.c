@@ -16,7 +16,7 @@ void tokenizer_init(struct tokenizer *t) {
 
 static bool literal_char_p(char c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-         (c >= '0' && c <= '9');
+         (c >= '0' && c <= '9') || (c == '_');
 }
 
 static bool op_literal_char_p(char c) {
