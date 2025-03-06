@@ -138,13 +138,17 @@ static int tok_parse(struct tokenizer *t) {
 }
 
 static int tok_parse_float(struct tokenizer *t) {
+  t->token_type = tt_number;
   if (tok_parse_digits(t)) {
     return -1;
   }
+
   if (tokenizer_peek(t) != '.') {
     t->token_type = tt_number;
     return 0;
   }
+  tok_write_char(t, tokenizer_next(t));
+
   return tok_parse_digits(t);
 }
 
