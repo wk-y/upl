@@ -3,7 +3,6 @@
 #include "builtins.h"
 #include "stack.h"
 #include "value.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,7 +68,7 @@ struct value interpreter_eval(struct interpreter *interpreter,
       return func->cfunc(interpreter, node->statement.lhs, node->statement.rhs);
     }
     if (func->type == vt_func) {
-      struct value lvalue = interpreter_eval(interpreter, node->statement.rhs);
+      struct value lvalue = interpreter_eval(interpreter, node->statement.lhs);
       struct value rvalue = interpreter_eval(interpreter, node->statement.rhs);
       stack_push(&interpreter->stack);
       stack_set_variable(&interpreter->stack, "LHS", lvalue);

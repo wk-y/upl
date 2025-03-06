@@ -14,9 +14,25 @@ void tokenizer_init(struct tokenizer *t) {
   t->column = 0;
 }
 
-bool literal_char_p(char c) {
+static bool literal_char_p(char c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
          (c >= '0' && c <= '9');
+}
+
+static bool op_literal_char_p(char c) {
+  switch (c) {
+  case ',':
+  case '+':
+  case '-':
+  case '*':
+  case '/':
+  case '=':
+  case '<':
+  case '>':
+    return true;
+  default:
+    return false;
+  }
 }
 
 static int tokenizer_getc(struct tokenizer *t, FILE *f) {
@@ -88,35 +104,36 @@ void tokenizer_feed(struct tokenizer *t, FILE *f) {
     return;
   }
 
+  if (op_literal_char_p(c)) {
+    t->token_type = tt_symbol;
+    while (op_literal_char_p(c)) {
+      t->literal[t->literal_len++] = c;
+      c = TGETC(f);
+    }
+    t->literal[t->literal_len] = 0;
+    if (c != EOF) {
+      TUNGETC(c, f);
+    }
+    return;
+  }
+
   switch (c) {
   case ';':
     t->token_type = tt_semicolon;
     strcpy(t->literal, ";");
     t->literal_len = strlen(t->literal);
     break;
+
   case '(':
     t->token_type = tt_lpar;
     strcpy(t->literal, "(");
     t->literal_len = strlen(t->literal);
     break;
+
   case ')':
     t->token_type = tt_rpar;
     strcpy(t->literal, ")");
     t->literal_len = strlen(t->literal);
-    break;
-
-  case ',':
-  case '+':
-  case '-':
-  case '*':
-  case '/':
-  case '=':
-  case '<':
-  case '>':
-    t->token_type = tt_symbol;
-    t->literal_len = 1;
-    t->literal[0] = c;
-    t->literal[1] = 0;
     break;
 
   case '"': {

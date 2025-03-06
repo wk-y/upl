@@ -2,6 +2,7 @@ VPATH = src
 .PHONY : run test test_ast
 
 CFLAGS = -MMD -fsanitize=address -g -Og -std=c17 -Wall -Wextra -Wpedantic
+LDFLAGS = -lm
 
 objects = ast.o eval.o parser.o tokenizer.o value.o builtins.o stack.o
 
