@@ -81,6 +81,21 @@ static void tok_write_char(struct tokenizer *t, char c) {
 }
 
 static int tok_parse(struct tokenizer *t) {
+  if (tokenizer_peek(t) == '-') {
+    tok_write_char(t, tokenizer_next(t));
+    switch (tokenizer_peek(t)) {
+      CASE_FIRST_FLOAT;
+      return tok_parse_float(t);
+
+      CASE_FIRST_SYMBOL;
+      return tok_parse_symbol(t);
+
+    default:
+      t->token_type = tt_symbol;
+      return 0;
+    }
+  }
+
   switch (tokenizer_peek(t)) {
     CASE_FIRST_WHIESPACE;
     tokenizer_next(t);
