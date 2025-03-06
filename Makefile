@@ -8,6 +8,11 @@ objects = ast.o eval.o parser.o tokenizer.o value.o builtins.o stack.o
 
 upl : $(objects)
 
+tokenizer.o : tokenizer_first.h
+
+tokenizer_first.h: tokenizer_first.sh
+	src/tokenizer_first.sh > tokenizer_first.h
+
 run : upl
 	./upl
 

@@ -1,6 +1,7 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 #include "stddef.h"
+#include <stdbool.h>
 #include <stdio.h>
 
 enum token_type {
@@ -20,7 +21,10 @@ struct tokenizer {
   size_t literal_len;
   size_t literal_cap;
   size_t line;
-  size_t column, _prev_column;
+  size_t column;
+  int _peeked;
+  bool peeking;
+  FILE *_file;
 };
 
 void tokenizer_init(struct tokenizer *);
