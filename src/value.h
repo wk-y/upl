@@ -31,7 +31,7 @@ struct value_func {
 struct value {
   enum value_type type;
   union {
-    float number;
+    double number;
     struct value_string *string;
     struct cons_cell *cell;
     struct value_func *func;

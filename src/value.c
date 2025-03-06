@@ -103,7 +103,7 @@ void value_print(FILE *f, struct value const value) {
     break;
 
   case vt_number:
-    fprintf(f, "%f", value.number);
+    fprintf(f, "%.15g", value.number);
     break;
 
   case vt_string:
