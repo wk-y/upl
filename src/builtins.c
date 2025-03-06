@@ -108,7 +108,7 @@ static struct value eval_modulo(struct interpreter *interpreter,
     return result;
   }
   result.type = vt_number;
-  result.number = fmodf(lvalue.number, rvalue.number);
+  result.number = fmodl(lvalue.number, rvalue.number);
   return result;
 }
 
