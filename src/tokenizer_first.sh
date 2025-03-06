@@ -2,8 +2,10 @@
 #
 # Grammar
 # <parse> ::= <whitespace> <token>
-# <token> ::= <float> | <literal> | <symbol> | <lpar> | <rpar> | <semicolon>
-# <float> ::= "." <digit> {<digit>} | <digit> {<digit} "." {<digit>}
+# <token> ::= ['-']<float> | <literal> | <symbol> | <lpar> | <rpar> | <semicolon>
+# <float> ::= '.' <digit> {<digit>} | <digit> {<digit} '.' {<digit>}
+#
+# The grammar isn't quite LL1, as the '-' symbol can start either a negative number or a symbol.
 # literals are one or more alphanumeric characters, and symbols are one or more symbols characters. 
 
 print_first() {
