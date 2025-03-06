@@ -1,0 +1,15 @@
+even_sum = 0;
+
+x = 1;
+y = 1;
+
+(x < 4000000) while (
+    (0 == x mod 2) then even_sum = even_sum + x;
+    z = x + y;
+    x = y;
+    y = z;
+    n = n + 1;
+);
+
+,print even_sum;
+,print "\n";
