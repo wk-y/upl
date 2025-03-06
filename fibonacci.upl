@@ -1,18 +1,23 @@
-next = ,func (
-    z = x + y;
-    x = y;
-    y = z;
+fib = ,func (
+    x = 1;
+    y = 1;
+    n = 0;
+    (n < RHS) while (
+        z = x + y;
+        x = y;
+        y = z;
+        n = n + 1;
+    );
+    x;
 );
-,print next;
-,print "\n";
 
-x = 1;
-y = 1;
-(
-    ,print x;
-    ,print "\n";
-    
-    ,next,;
-    
-    x < 100;
-) while,
+println = ,func (
+    ,print RHS;
+    ,print "\n"
+);
+
+i = 0;
+(i < 10) while (
+    ,println ,fib i;
+    i = i + 1;
+);

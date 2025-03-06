@@ -3,7 +3,7 @@ VPATH = src
 
 CFLAGS = -MMD -fsanitize=address -g -Og -std=c17 -Wall -Wextra -Wpedantic
 
-objects = ast.o eval.o parser.o tokenizer.o value.o builtins.o
+objects = ast.o eval.o parser.o tokenizer.o value.o builtins.o stack.o
 
 upl : $(objects)
 

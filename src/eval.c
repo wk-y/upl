@@ -1,55 +1,26 @@
 #include "eval.h"
 #include "ast.h"
 #include "builtins.h"
+#include "stack.h"
 #include "value.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 void interpreter_init(struct interpreter *m) {
-  m->variables = NULL;
+  stack_init(&m->stack);
   builtins_load_all(m);
 }
 
-void interpreter_deinit(struct interpreter *m) {
-  while (m->variables) {
-    struct variables *v = m->variables;
-    m->variables = m->variables->next;
-    free(v->name);
-    value_dec_ref(&v->value);
-    free(v);
-  }
-}
+void interpreter_deinit(struct interpreter *m) { stack_deinit(&m->stack); }
 
 struct value *interpreter_get_variable(struct interpreter *m, char *name) {
-  for (struct variables *v = m->variables; v; v = v->next) {
-    if (!strcmp(v->name, name)) {
-      return &v->value;
-    }
-  }
-  return NULL;
+  return stack_get_variable(&m->stack, name);
 }
 
 void interpreter_set_variable(struct interpreter *m, char *name,
                               struct value value) {
-  struct value *var = interpreter_get_variable(m, name);
-  if (!var) {
-    struct variables *new_variable = malloc(sizeof(*new_variable));
-    if (!new_variable) {
-      abort();
-    }
-
-    new_variable->name = malloc(strlen(name) + 1);
-    if (!new_variable->name) {
-      abort();
-    }
-    strcpy(new_variable->name, name);
-    new_variable->value.type = vt_null;
-    new_variable->next = m->variables;
-    m->variables = new_variable;
-    var = &new_variable->value;
-  }
-  value_set(var, value);
+  stack_set_variable(&m->stack, name, value);
 }
 
 // The returned value will have a ref count of 1.
@@ -98,7 +69,16 @@ struct value interpreter_eval(struct interpreter *interpreter,
       return func->cfunc(interpreter, node->statement.lhs, node->statement.rhs);
     }
     if (func->type == vt_func) {
-      return interpreter_eval(interpreter, &func->func->ast);
+      struct value lvalue = interpreter_eval(interpreter, node->statement.rhs);
+      struct value rvalue = interpreter_eval(interpreter, node->statement.rhs);
+      stack_push(&interpreter->stack);
+      stack_set_variable(&interpreter->stack, "LHS", lvalue);
+      stack_set_variable(&interpreter->stack, "RHS", rvalue);
+      value_dec_ref(&lvalue);
+      value_dec_ref(&rvalue);
+      struct value result = interpreter_eval(interpreter, &func->func->ast);
+      stack_pop(&interpreter->stack);
+      return result;
     }
 
     return verror;
