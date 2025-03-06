@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "tokenizer.h"
 #include "value.h"
+#include <stdlib.h>
 #include <string.h>
 
 int run_repl(void);
@@ -49,7 +50,8 @@ int run_repl(void) {
 
   cleanup_read:
     parser_deinit(&parser);
-    ast_node_free(ast);
+    ast_node_destroy(ast);
+    free(ast);
   }
 
   interpreter_deinit(&interpreter);
@@ -90,7 +92,9 @@ int run_script(char *filename) {
   }
 
   parser_deinit(&parser);
-  ast_node_free(ast);
+  ast_node_destroy(ast);
+  free(ast);
+
   fclose(input_file);
   return 0;
 }

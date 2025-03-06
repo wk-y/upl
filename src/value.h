@@ -14,11 +14,17 @@ enum value_type {
   vt_string,
   vt_cons,
   vt_cfunc,
+  vt_func,
   vt_error,
 };
 
 struct value_string {
   char *string;
+  size_t ref_count;
+};
+
+struct value_func {
+  struct ast_node ast;
   size_t ref_count;
 };
 
@@ -28,6 +34,7 @@ struct value {
     float number;
     struct value_string *string;
     struct cons_cell *cell;
+    struct value_func *func;
     struct value (*cfunc)(struct interpreter *, struct ast_node *,
                           struct ast_node *);
   };
@@ -45,6 +52,10 @@ void cons_inc_ref(struct cons_cell *cell);
 // Returns true if the string was freed.
 bool string_dec_ref(struct value_string *str);
 void string_inc_ref(struct value_string *str);
+
+// Returns true if the string was freed.
+bool func_inc_ref(struct value_string *str);
+void func_dec_ref(struct value_string *str);
 
 struct value cons(struct value lhs, struct value rhs);
 

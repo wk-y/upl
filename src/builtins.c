@@ -1,6 +1,8 @@
 #include "builtins.h"
+#include "ast.h"
 #include "eval.h"
 #include "value.h"
+#include <stdlib.h>
 
 static struct value eval_print(struct interpreter *interpreter,
                                struct ast_node *lhs, struct ast_node *rhs) {
@@ -115,6 +117,20 @@ static struct value eval_while(struct interpreter *interpreter,
   return result;
 }
 
+static struct value eval_func(struct interpreter *interpreter,
+                              struct ast_node *lhs, struct ast_node *rhs) {
+  (void)interpreter;
+  (void)lhs;
+  struct value result = {.type = vt_func};
+  if (!(result.func = malloc(sizeof(*result.func)))) {
+    abort();
+  }
+
+  ast_deep_copy(&result.func->ast, rhs);
+  result.func->ref_count = 1;
+  return result;
+}
+
 static void add_cfunc(struct interpreter *m, char *name,
                       struct value (*cfunc)(struct interpreter *,
                                             struct ast_node *,
@@ -133,4 +149,5 @@ void builtins_load_all(struct interpreter *m) {
 
   add_cfunc(m, "+", eval_plus);
   add_cfunc(m, "*", eval_multiply);
+  add_cfunc(m, "func", eval_func);
 }

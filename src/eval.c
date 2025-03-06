@@ -56,6 +56,7 @@ void interpreter_set_variable(struct interpreter *m, char *name,
 // Use value_dec_ref if the value is not used.
 struct value interpreter_eval(struct interpreter *interpreter,
                               struct ast_node *node) {
+  struct value verror = {.type = vt_error};
   switch (node->type) {
   case at_string: {
     struct value result = {.type = vt_string};
@@ -71,17 +72,14 @@ struct value interpreter_eval(struct interpreter *interpreter,
   }
 
   case at_symbol: {
-    struct value result = {.type = vt_null};
     struct value *var =
         interpreter_get_variable(interpreter, node->symbol.literal);
     if (var) {
       value_inc_ref(var);
       return *var;
     } else {
-      struct value result = {.type = vt_error};
-      return result;
+      return verror;
     }
-    return result;
   }
 
   case at_number: {
@@ -92,13 +90,18 @@ struct value interpreter_eval(struct interpreter *interpreter,
   case at_statement:;
     struct value *func = interpreter_get_variable(
         interpreter, node->statement.operator->symbol.literal);
-    if (!func || func->type != vt_cfunc) {
-      struct value result = {.type = vt_error};
-      return result;
+    if (!func) {
+      return verror;
     }
 
-    return func->cfunc(interpreter, node->statement.lhs, node->statement.rhs);
+    if (func->type == vt_cfunc) {
+      return func->cfunc(interpreter, node->statement.lhs, node->statement.rhs);
+    }
+    if (func->type == vt_func) {
+      return interpreter_eval(interpreter, &func->func->ast);
+    }
 
+    return verror;
   case at_statement_list: {
     struct value result = {.type = vt_null};
 

@@ -54,7 +54,7 @@ struct ast_node *ast_make_compound_statement(struct ast_node *dst,
                                              struct ast_node *rhs);
 
 struct ast_node *ast_deep_copy(struct ast_node *, struct ast_node *);
-void ast_node_free(struct ast_node *);
+void ast_node_destroy(struct ast_node *);
 
 void ast_print(FILE *, struct ast_node *);
 
