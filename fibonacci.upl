@@ -1,11 +1,18 @@
+next = ,func (
+    z = x + y;
+    x = y;
+    y = z;
+);
+,print next;
+,print "\n";
+
 x = 1;
 y = 1;
 (
     ,print x;
     ,print "\n";
-    z = x + y;
-    x = y;
-    y = z;
+    
+    ,next,;
     
     x < 100;
 ) while,

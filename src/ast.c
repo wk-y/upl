@@ -31,7 +31,7 @@ struct ast_node *ast_node_ref(struct ast_node *node) {
   return node;
 }
 
-void ast_node_free(struct ast_node *node) {
+void ast_node_destroy(struct ast_node *node) {
   if (!node) {
     return;
   }
@@ -46,18 +46,28 @@ void ast_node_free(struct ast_node *node) {
     break;
 
   case at_statement:
-    ast_node_free(node->statement.lhs);
-    ast_node_free(node->statement.rhs);
-    ast_node_free(node->statement.operator);
+    ast_node_destroy(node->statement.lhs);
+    free(node->statement.lhs);
+
+    ast_node_destroy(node->statement.rhs);
+    free(node->statement.rhs);
+
+    ast_node_destroy(node->statement.operator);
+    free(node->statement.operator);
     break;
 
   case at_statement_list:
-    ast_node_free(node->statement_list.statement);
+    ast_node_destroy(node->statement_list.statement);
+    free(node->statement_list.statement);
+
     struct ast_node_statement_list *list = node->statement_list.next;
     while (list) {
-      ast_node_free(list->statement);
+      ast_node_destroy(list->statement);
+      free(list->statement);
+
       struct ast_node_statement_list *to_free = list;
       list = list->next;
+
       free(to_free);
     }
     break;
@@ -65,8 +75,6 @@ void ast_node_free(struct ast_node *node) {
   case at_number:
     break; // nothing to do here
   }
-
-  free(node);
 }
 
 struct ast_node *ast_make_number(struct ast_node *dst, float n) {
@@ -96,7 +104,9 @@ ast_deep_copy_statement_list(struct ast_node_statement_list *list) {
   if (!result) {
     abort();
   }
-  result->statement = NULL;
+  if (!(result->statement = malloc(sizeof(*result->statement)))) {
+    abort();
+  }
   ast_deep_copy(result->statement, list->statement);
   result->next = ast_deep_copy_statement_list(list->next);
   return result;
@@ -109,13 +119,18 @@ struct ast_node *ast_deep_copy(struct ast_node *dst, struct ast_node *node) {
   case at_string:
     return ast_make_string(dst, node->string.literal);
   case at_statement:
-    return ast_make_compound_statement(dst, node->statement.operator,
-                                       node->statement.lhs,
-                                       node->statement.rhs);
+    return ast_make_compound_statement(
+        dst, ast_deep_copy(ast_node_alloc(), node->statement.operator),
+        ast_deep_copy(ast_node_alloc(), node->statement.lhs),
+        ast_deep_copy(ast_node_alloc(), node->statement.rhs));
   case at_symbol:
     return ast_make_literal(dst, node->symbol.literal);
   case at_statement_list:;
     dst->type = at_statement_list;
+    if (!(dst->statement_list.statement =
+              malloc(sizeof(*dst->statement_list.statement)))) {
+      abort();
+    }
     ast_deep_copy(dst->statement_list.statement,
                   node->statement_list.statement);
     dst->statement_list.next =
@@ -214,7 +229,9 @@ static int parse_statement_list_helper(struct parser *p,
     }
 
     if (parse_statement_list_helper(p, r->next)) {
-      ast_node_free(r->statement);
+      ast_node_destroy(r->statement);
+      free(r->statement);
+
       r->statement = NULL;
       free(r->next);
       r->next = NULL;
@@ -253,16 +270,21 @@ int parse_statement(struct parser *p, struct ast_node **r) {
 
     struct ast_node *operator, * rhs;
     if ((err = parse_literal(p, &operator))) {
-      ast_node_free(*r);
+      ast_node_destroy(*r);
+      free(*r);
+
       *r = NULL;
       return err;
     }
 
     if ((err = parse_statement(p, &rhs))) {
       parse_statement(p, &rhs);
-      ast_node_free(*r);
+      ast_node_destroy(*r);
+      free(*r);
+
       *r = NULL;
-      ast_node_free(operator);
+      ast_node_destroy(operator);
+      free(operator);
       return err;
     }
 
@@ -287,7 +309,8 @@ int parse_expr(struct parser *p, struct ast_node **r) {
 
     parser_next(p);
     if (p->tokenizer.token_type != tt_rpar) {
-      ast_node_free(*r);
+      ast_node_destroy(*r);
+      free(*r);
       *r = NULL;
       return -1;
     }

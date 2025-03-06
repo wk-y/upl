@@ -1,4 +1,5 @@
 #include "value.h"
+#include "ast.h"
 #include <stdlib.h>
 
 bool cons_dec_ref(struct cons_cell *cell) {
@@ -39,6 +40,13 @@ void value_dec_ref(struct value *value) {
       value->type = vt_null;
     }
     break;
+  case vt_func:
+    if (value->func->ref_count-- > 1) {
+      break;
+    }
+    ast_node_destroy(&value->func->ast);
+    free(value->func);
+    value->type = vt_null;
   default:
     break;
   }
@@ -52,6 +60,8 @@ void value_inc_ref(struct value *value) {
   case vt_string:
     string_inc_ref(value->string);
     break;
+  case vt_func:
+    value->func->ref_count++;
   default:
     break;
   }
@@ -106,6 +116,10 @@ void value_print(FILE *f, struct value const value) {
 
   case vt_cfunc:
     fputs("<c function>", f);
+    break;
+
+  case vt_func:
+    fputs("<function>", f);
     break;
   }
 }
