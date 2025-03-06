@@ -77,7 +77,7 @@ void ast_node_destroy(struct ast_node *node) {
   }
 }
 
-struct ast_node *ast_make_number(struct ast_node *dst, float n) {
+struct ast_node *ast_make_number(struct ast_node *dst, double n) {
   dst->type = at_number;
   dst->number.value = n;
   return dst;
@@ -349,8 +349,8 @@ int parse_number(struct parser *p, struct ast_node **r) {
   parser_next(p);
   switch (p->tokenizer.token_type) {
   case tt_number:;
-    float n;
-    sscanf(p->tokenizer.literal, "%f", &n);
+    double n;
+    sscanf(p->tokenizer.literal, "%lf", &n);
     *r = ast_make_number(ast_node_alloc(), n);
     return 0;
   default:

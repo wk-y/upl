@@ -31,7 +31,7 @@ struct ast_node_string {
 };
 
 struct ast_node_number {
-  float value;
+  double value;
 };
 
 struct ast_node {
@@ -45,7 +45,7 @@ struct ast_node {
   };
 };
 
-struct ast_node *ast_make_number(struct ast_node *dst, float);
+struct ast_node *ast_make_number(struct ast_node *dst, double);
 struct ast_node *ast_make_literal(struct ast_node *dst, char const *);
 struct ast_node *ast_make_string(struct ast_node *dst, char const *);
 struct ast_node *ast_make_compound_statement(struct ast_node *dst,
