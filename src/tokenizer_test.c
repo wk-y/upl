@@ -10,6 +10,11 @@ int main(void) {
     if (tokenizer.token_type == tt_eof) {
       break;
     }
+    if (tokenizer.token_type == tt_error) {
+      printf("Error token at %zu:%zu: %s", tokenizer.line, tokenizer.column,
+             tokenizer.literal);
+      break;
+    }
     printf("Token %s\n", tokenizer.literal);
   }
 
