@@ -2,16 +2,11 @@
 #define EVAL_H
 
 #include "ast.h"
+#include "stack.h"
 #include "value.h"
 
-struct variables {
-  char *name;
-  struct value value;
-  struct variables *next;
-};
-
 struct interpreter {
-  struct variables *variables;
+  struct stack stack;
 };
 
 void interpreter_init(struct interpreter *);
