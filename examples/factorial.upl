@@ -1,0 +1,8 @@
+factorial = ,func (
+    r = 1;
+    (RHS > 1) then r = RHS * ,factorial RHS - 1;
+    r;
+);
+
+,print ,factorial 20;
+,print "\n";
