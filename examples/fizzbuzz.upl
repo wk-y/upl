@@ -1,0 +1,16 @@
+n = 1;
+
+(n < 101) while (
+    show_n = 1;
+    (0 == n mod 3) then (
+        show_n = 0;
+        ,print "Fizz";
+    );
+    (0 == n mod 5) then (
+        show_n = 0;
+        ,print "Buzz";
+    );
+    show_n then ,print n;
+    ,print "\n";
+    n = n + 1;
+)
