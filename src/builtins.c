@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "eval.h"
 #include "value.h"
+#include <math.h>
 #include <stdlib.h>
 
 static struct value eval_print(struct interpreter *interpreter,
@@ -51,6 +52,21 @@ static struct value eval_plus(struct interpreter *interpreter,
   return result;
 }
 
+static struct value eval_minus(struct interpreter *interpreter,
+                               struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number - rvalue.number;
+  return result;
+}
+
 static struct value eval_multiply(struct interpreter *interpreter,
                                   struct ast_node *lhs, struct ast_node *rhs) {
   struct value result = {.type = vt_null};
@@ -63,6 +79,36 @@ static struct value eval_multiply(struct interpreter *interpreter,
   }
   result.type = vt_number;
   result.number = lvalue.number * rvalue.number;
+  return result;
+}
+
+static struct value eval_divide(struct interpreter *interpreter,
+                                struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number / rvalue.number;
+  return result;
+}
+
+static struct value eval_modulo(struct interpreter *interpreter,
+                                struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = fmodf(lvalue.number, rvalue.number);
   return result;
 }
 
@@ -79,6 +125,21 @@ static struct value eval_set(struct interpreter *interpreter,
   return value;
 }
 
+static struct value eval_equals(struct interpreter *interpreter,
+                                struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number == rvalue.number;
+  return result;
+}
+
 static struct value eval_lt(struct interpreter *interpreter,
                             struct ast_node *lhs, struct ast_node *rhs) {
   struct value result = {.type = vt_null};
@@ -91,6 +152,21 @@ static struct value eval_lt(struct interpreter *interpreter,
   }
   result.type = vt_number;
   result.number = lvalue.number < rvalue.number;
+  return result;
+}
+
+static struct value eval_gt(struct interpreter *interpreter,
+                            struct ast_node *lhs, struct ast_node *rhs) {
+  struct value result = {.type = vt_null};
+  struct value lvalue = interpreter_eval(interpreter, lhs);
+  struct value rvalue = interpreter_eval(interpreter, rhs);
+  if (lvalue.type != vt_number || rvalue.type != vt_number) {
+    value_dec_ref(&lvalue);
+    value_dec_ref(&rvalue);
+    return result;
+  }
+  result.type = vt_number;
+  result.number = lvalue.number > rvalue.number;
   return result;
 }
 
@@ -117,6 +193,26 @@ static struct value eval_while(struct interpreter *interpreter,
   return result;
 }
 
+static struct value eval_then(struct interpreter *interpreter,
+                              struct ast_node *lhs, struct ast_node *rhs) {
+  struct value vnull = {.type = vt_null};
+  struct value value = interpreter_eval(interpreter, lhs);
+  if (value.type != vt_number) {
+    value_dec_ref(&value);
+    return vnull;
+  }
+
+  if (!value.number) {
+    value_dec_ref(&value);
+    return vnull;
+  }
+
+  value = interpreter_eval(interpreter, rhs);
+  value_dec_ref(&value);
+
+  return vnull;
+}
+
 static struct value eval_func(struct interpreter *interpreter,
                               struct ast_node *lhs, struct ast_node *rhs) {
   (void)interpreter;
@@ -141,13 +237,21 @@ static void add_cfunc(struct interpreter *m, char *name,
 
 void builtins_load_all(struct interpreter *m) {
   add_cfunc(m, ",", eval_cons);
+  add_cfunc(m, "=", eval_set);
   add_cfunc(m, "and", eval_and);
   add_cfunc(m, "print", eval_print);
+
   add_cfunc(m, "while", eval_while);
-  add_cfunc(m, "=", eval_set);
+  add_cfunc(m, "then", eval_then);
+
+  add_cfunc(m, "==", eval_equals);
   add_cfunc(m, "<", eval_lt);
+  add_cfunc(m, ">", eval_gt);
+  add_cfunc(m, "mod", eval_modulo);
 
   add_cfunc(m, "+", eval_plus);
+  add_cfunc(m, "-", eval_minus);
   add_cfunc(m, "*", eval_multiply);
+  add_cfunc(m, "/", eval_divide);
   add_cfunc(m, "func", eval_func);
 }

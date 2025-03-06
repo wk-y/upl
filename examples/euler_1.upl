@@ -1,0 +1,13 @@
+or = ,func 0 < LHS + RHS;
+
+println = ,func (
+    ,print RHS;
+    ,print "\n";
+);
+
+sum = 0;
+i = 0;
+(1000 > i = i + 1) while 
+    ((0 == i mod 3) or (0 == i mod 5)) then sum = sum + i;
+
+,println sum;
