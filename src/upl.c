@@ -33,6 +33,11 @@ int run_repl(void) {
     struct ast_node *ast = NULL;
     if (parse_statement(&parser, &ast)) {
       printf("Failed to parse\n");
+      int c;
+      do {
+        c = getc(stdin);
+      } while (c != EOF && c != '\n');
+
       goto cleanup_read;
     }
 
@@ -69,9 +74,33 @@ int run_script(char *filename) {
   struct ast_node *ast = NULL;
   if (parse_statement_list(&parser, &ast)) {
     fprintf(stderr, "%s:%zu:%zu: Parse error\n", filename,
-            parser.tokenizer.line, parser.tokenizer.column);
+            parser.tokenizer.start_line, parser.tokenizer.start_column);
 
-    if (!fseek(input_file, -parser.tokenizer.column, SEEK_CUR)) {
+    if (!fseek(input_file,
+               -(long)(parser.tokenizer.start_column +
+                       parser.tokenizer.token_source_chars),
+               SEEK_CUR)) {
+      // Print the error line
+      for (size_t i = 0; i < parser.tokenizer.start_column; i++) {
+        int c = getc(input_file);
+        if (c == EOF) {
+          goto print_err;
+        }
+        fputc(c, stderr);
+      }
+
+      fputs("\x1b[31m", stderr); // highlight red
+
+      for (size_t i = 0; i < parser.tokenizer.token_source_chars; i++) {
+        int c = getc(input_file);
+        if (c == EOF) {
+          goto print_err;
+        }
+        fputc(c, stderr);
+      }
+
+      fputs("\x1b[0m", stderr); // reset color
+
       for (;;) {
         int c = getc(input_file);
         if (c == EOF || c == '\n') {
@@ -79,12 +108,19 @@ int run_script(char *filename) {
         }
         fputc(c, stderr);
       }
+
       fputc('\n', stderr);
-      for (size_t i = 0;
-           i < parser.tokenizer.column - parser.tokenizer.literal_len; i++) {
+      for (size_t i = 0; i < parser.tokenizer.start_column; i++) {
         fputc(' ', stderr);
       }
-      fprintf(stderr, "^ Unexpected \"%s\"\n", parser.tokenizer.literal);
+
+      fprintf(stderr, "^ Unexpected %s\n",
+              token_type_string(parser.tokenizer.token_type));
+      if (0) {
+      print_err:
+        fputs("\x1b[0m", stderr); // reset color
+        fprintf(stderr, "\nCould not print source code.\n");
+      }
     }
   } else {
     struct value v = eval(ast);
