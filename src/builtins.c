@@ -236,6 +236,8 @@ static void add_cfunc(struct interpreter *m, char *name,
 }
 
 void builtins_load_all(struct interpreter *m) {
+  struct value vnull = {.type = vt_null};
+  interpreter_set_variable(m, ".", vnull);
   add_cfunc(m, ",", eval_cons);
   add_cfunc(m, "=", eval_set);
   add_cfunc(m, "and", eval_and);
