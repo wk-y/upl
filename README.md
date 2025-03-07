@@ -2,16 +2,16 @@
 
 This is a toy programming language.
 
-## Builtins
+All operators are infix and right-to-left associative.
+For operators that only use the value on one side, it is convenient to use one of the single-character operators as a filler (ex `,`)
 
-- **,** - Construct (LHS, RHS)
-- **and** - Construct (LHS, (RHS, NULL))
-- **print** - Print RHS (ignores LHS)
-- **while** - while the LHS evaluates to true, evaluate the RHS.
-- **=** - while the LHS evaluates to true, evaluate the RHS.
-- **<** - 1 if LHS < RHS, else 0.
-- **+** - LHS + RHS
-- **\*** - LHS * RHS
+```
+,print "Hello World!\n";
+```
+
+For more example code, see the `examples` directory.
+
+See `builtins_load_all` in builtins.c for the list of builtins.
 
 ## Grammar
 
