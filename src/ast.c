@@ -278,7 +278,6 @@ int parse_statement(struct parser *p, struct ast_node **r) {
     }
 
     if ((err = parse_statement(p, &rhs))) {
-      parse_statement(p, &rhs);
       ast_node_destroy(*r);
       free(*r);
 
