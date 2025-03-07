@@ -20,8 +20,9 @@ struct tokenizer {
   char *literal;
   size_t literal_len;
   size_t literal_cap;
-  size_t line;
-  size_t column;
+  size_t start_line, stop_line;
+  size_t start_column, stop_column;
+  size_t token_source_chars;
   int _peeked;
   bool peeking;
   FILE *_file;
@@ -30,5 +31,7 @@ struct tokenizer {
 void tokenizer_init(struct tokenizer *);
 void tokenizer_deinit(struct tokenizer *);
 void tokenizer_feed(struct tokenizer *, FILE *);
+
+char const *token_type_string(enum token_type);
 
 #endif

@@ -23,8 +23,14 @@ void tokenizer_init(struct tokenizer *t) {
   if (!(t->literal = malloc(t->literal_cap))) {
     abort();
   };
-  t->line = 1;
-  t->column = 0;
+  t->start_line = t->stop_line = 1;
+  t->start_column = t->stop_column = 0;
+}
+
+static void tokenizer_start_token(struct tokenizer *t) {
+  t->token_source_chars = 0;
+  t->start_column = t->stop_column;
+  t->start_line = t->stop_line;
 }
 
 static int tokenizer_peek(struct tokenizer *t) {
@@ -38,13 +44,19 @@ static int tokenizer_peek(struct tokenizer *t) {
 static int tokenizer_next(struct tokenizer *t) {
   int c = tokenizer_peek(t);
   t->peeking = false;
+  t->token_source_chars++;
 
   if (c == '\n') {
-    t->line++;
-    t->column = 0;
+    t->stop_line++;
+    t->stop_column = 0;
   } else {
-    // todo: Handle variable width ('\t').
-    t->column += 1;
+    switch (c) {
+    case '\t':
+      t->stop_column += 8; // divisive
+      break;
+    default:
+      t->stop_column += 1;
+    }
   }
   return c;
 
@@ -81,6 +93,8 @@ static void tok_write_char(struct tokenizer *t, char c) {
 }
 
 static int tok_parse(struct tokenizer *t) {
+  tokenizer_start_token(t);
+
   if (tokenizer_peek(t) == '-') {
     tok_write_char(t, tokenizer_next(t));
     switch (tokenizer_peek(t)) {
@@ -224,4 +238,26 @@ static int tok_parse_string(struct tokenizer *t) {
       tok_write_char(t, tokenizer_next(t));
     }
   }
+}
+
+char const *token_type_string(enum token_type tt) {
+  switch (tt) {
+  case tt_string:
+    return "string";
+  case tt_symbol:
+    return "symbol";
+  case tt_number:
+    return "number";
+  case tt_rpar:
+    return ")";
+  case tt_lpar:
+    return "(";
+  case tt_semicolon:
+    return "semicolon";
+  case tt_eof:
+    return "end of file";
+  case tt_error:
+    return "tokenizer error";
+  }
+  return "???";
 }
