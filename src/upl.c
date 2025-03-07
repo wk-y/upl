@@ -72,7 +72,8 @@ int run_script(char *filename) {
   struct parser parser;
   parser_init(&parser, input_file);
   struct ast_node *ast = NULL;
-  if (parse_statement_list(&parser, &ast)) {
+  if (parse_statement_list(&parser, &ast) ||
+      (parser_peek(&parser), parser.tokenizer.token_type != tt_eof)) {
     fprintf(stderr, "%s:%zu:%zu: Parse error\n", filename,
             parser.tokenizer.start_line, parser.tokenizer.start_column);
 
