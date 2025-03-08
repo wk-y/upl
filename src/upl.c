@@ -64,6 +64,7 @@ int run_repl(void) {
 }
 
 int run_script(char *filename) {
+  int exit_code = 0;
   FILE *input_file = fopen(filename, "r");
   if (!input_file) {
     fputs("Failed to open script file\n", stderr);
@@ -123,6 +124,7 @@ int run_script(char *filename) {
         fprintf(stderr, "\nCould not print source code.\n");
       }
     }
+    exit_code = 1;
   } else {
     struct value v = eval(ast);
     value_dec_ref(&v);
@@ -133,5 +135,5 @@ int run_script(char *filename) {
   free(ast);
 
   fclose(input_file);
-  return 0;
+  return exit_code;
 }
