@@ -1,9 +1,9 @@
 #include "ast.h"
 #include "eval.h"
 #include "parser.h"
-#include "stdio.h"
 #include "tokenizer.h"
 #include "value.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
