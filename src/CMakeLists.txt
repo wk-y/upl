@@ -1,0 +1,10 @@
+add_library(Ast ast.c)
+add_library(Builtins builtins.c)
+add_library(Eval eval.c)
+add_library(Parser parser.c)
+add_library(Stack stack.c)
+add_library(Tokenizer tokenizer.c)
+add_library(Value value.c)
+
+target_link_libraries(Eval PUBLIC m Builtins Stack)
+target_link_libraries(Value PUBLIC Ast)
