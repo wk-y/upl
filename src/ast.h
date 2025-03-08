@@ -45,8 +45,11 @@ struct ast_node {
   };
 };
 
+/* Convert the node into a number node and return dst. */
 struct ast_node *ast_make_number(struct ast_node *dst, double);
-struct ast_node *ast_make_literal(struct ast_node *dst, char const *);
+
+/* Convert the node into a literal node and return dst. */
+struct ast_node *ast_make_symbol(struct ast_node *dst, char const *);
 struct ast_node *ast_make_string(struct ast_node *dst, char const *);
 struct ast_node *ast_make_compound_statement(struct ast_node *dst,
                                              struct ast_node *operator,

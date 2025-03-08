@@ -124,7 +124,7 @@ struct ast_node *ast_deep_copy(struct ast_node *dst, struct ast_node *node) {
         ast_deep_copy(ast_node_alloc(), node->statement.lhs),
         ast_deep_copy(ast_node_alloc(), node->statement.rhs));
   case at_symbol:
-    return ast_make_literal(dst, node->symbol.literal);
+    return ast_make_symbol(dst, node->symbol.literal);
   case at_statement_list:;
     dst->type = at_statement_list;
     if (!(dst->statement_list.statement =
@@ -188,7 +188,7 @@ struct ast_node *ast_make_compound_statement(struct ast_node *dst,
   return dst;
 }
 
-struct ast_node *ast_make_literal(struct ast_node *dst, char const *literal) {
+struct ast_node *ast_make_symbol(struct ast_node *dst, char const *literal) {
   dst->type = at_symbol;
 
   if (!(dst->symbol.literal = malloc(strlen(literal) + 1))) {
@@ -337,7 +337,7 @@ int parse_literal(struct parser *p, struct ast_node **r) {
   parser_next(p);
   switch (p->tokenizer.token_type) {
   case tt_symbol:
-    *r = ast_make_literal(ast_node_alloc(), p->tokenizer.literal);
+    *r = ast_make_symbol(ast_node_alloc(), p->tokenizer.literal);
     return 0;
   default:
     return -1;
