@@ -1,0 +1,23 @@
+fib = ,func (
+    x = 1;
+    y = 1;
+    n = 0;
+    (n < RHS) while (
+        z = x + y;
+        x = y;
+        y = z;
+        n = n + 1;
+    );
+    x;
+);
+
+println = ,func (
+    ,print RHS;
+    ,print "\n"
+);
+
+i = 0;
+(i < 10) while (
+    ,println ,fib i;
+    i = i + 1;
+);
