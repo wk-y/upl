@@ -62,7 +62,7 @@ struct value interpreter_eval(struct interpreter *interpreter,
     switch (func.type) {
     case vt_cfunc:
       return func.cfunc(interpreter, node->statement.lhs, node->statement.rhs);
-    case vt_func:
+    case vt_func:;
       struct value lvalue = interpreter_eval(interpreter, node->statement.lhs);
       struct value rvalue = interpreter_eval(interpreter, node->statement.rhs);
       stack_push(&interpreter->stack);
