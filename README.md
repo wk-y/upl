@@ -13,6 +13,14 @@ For more example code, see the `examples` directory.
 
 See `builtins_load_all` in builtins.c for the list of builtins.
 
+## Building
+
+```
+src/tokenizer_first.sh > tokenizer_first.h
+cmake -S . -B build
+make
+```
+
 ## Grammar
 
 ```
