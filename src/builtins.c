@@ -115,7 +115,7 @@ static struct value eval_modulo(struct interpreter *interpreter,
 static struct value eval_set(struct interpreter *interpreter,
                              struct ast_node *lhs, struct ast_node *rhs) {
   if (lhs->type != at_symbol) {
-    struct value result = {.type = vt_null};
+    struct value result = {.type = vt_error};
     return result;
   }
 
