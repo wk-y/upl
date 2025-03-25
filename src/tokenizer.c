@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../tokenizer_first.h"
+#include "tokenizer_first.h"
 
 static void tok_write_char(struct tokenizer *t, char c);
 static int tokenizer_peek(struct tokenizer *t);

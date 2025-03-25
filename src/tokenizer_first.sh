@@ -8,6 +8,8 @@
 # The grammar isn't quite LL1, as the '-' symbol can start either a negative number or a symbol.
 # literals are one or more alphanumeric characters, and symbols are one or more symbols characters. 
 
+exec >tokenizer_first.h
+
 print_first() {
     printf "#define CASE_FIRST_$1";
     shift;
