@@ -264,31 +264,36 @@ int parse_statement(struct parser *p, struct ast_node **r) {
     }
 
     parser_peek(p);
-    if (p->tokenizer.token_type != tt_symbol) {
-      return 0; // Just an expression
+    switch (p->tokenizer.token_type) {
+      CASE_FIRST_EXPR {
+        struct ast_node *operator, * rhs;
+        if ((err = parse_expr(p, &operator))) {
+          ast_node_destroy(*r);
+          free(*r);
+
+          *r = NULL;
+          return err;
+        }
+
+        if ((err = parse_statement(p, &rhs))) {
+          ast_node_destroy(*r);
+          free(*r);
+
+          *r = NULL;
+          ast_node_destroy(operator);
+          free(operator);
+          return err;
+        }
+
+        *r = ast_make_compound_statement(ast_node_alloc(), operator, * r, rhs);
+        return 0;
+      }
+    default:
+      if (p->tokenizer.token_type != tt_symbol) {
+        return 0; // Just an expression
+      }
     }
-
-    struct ast_node *operator, * rhs;
-    if ((err = parse_literal(p, &operator))) {
-      ast_node_destroy(*r);
-      free(*r);
-
-      *r = NULL;
-      return err;
-    }
-
-    if ((err = parse_statement(p, &rhs))) {
-      ast_node_destroy(*r);
-      free(*r);
-
-      *r = NULL;
-      ast_node_destroy(operator);
-      free(operator);
-      return err;
-    }
-
-    *r = ast_make_compound_statement(ast_node_alloc(), operator, * r, rhs);
-    return 0;
+    abort(); // unreachable
   default:
     return -1;
   }

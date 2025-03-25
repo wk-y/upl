@@ -58,16 +58,11 @@ struct value interpreter_eval(struct interpreter *interpreter,
   }
 
   case at_statement:;
-    struct value *func = interpreter_get_variable(
-        interpreter, node->statement.operator->symbol.literal);
-    if (!func) {
-      return verror;
-    }
-
-    if (func->type == vt_cfunc) {
-      return func->cfunc(interpreter, node->statement.lhs, node->statement.rhs);
-    }
-    if (func->type == vt_func) {
+    struct value func = interpreter_eval(interpreter, node->statement.operator);
+    switch (func.type) {
+    case vt_cfunc:
+      return func.cfunc(interpreter, node->statement.lhs, node->statement.rhs);
+    case vt_func:
       struct value lvalue = interpreter_eval(interpreter, node->statement.lhs);
       struct value rvalue = interpreter_eval(interpreter, node->statement.rhs);
       stack_push(&interpreter->stack);
@@ -75,9 +70,12 @@ struct value interpreter_eval(struct interpreter *interpreter,
       stack_set_variable(&interpreter->stack, "RHS", rvalue);
       value_dec_ref(&lvalue);
       value_dec_ref(&rvalue);
-      struct value result = interpreter_eval(interpreter, &func->func->ast);
+      struct value result = interpreter_eval(interpreter, &func.func->ast);
       stack_pop(&interpreter->stack);
       return result;
+    default:
+      value_dec_ref(&func);
+      return verror;
     }
 
     return verror;
