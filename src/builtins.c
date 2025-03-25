@@ -39,7 +39,7 @@ static struct value eval_and(struct interpreter *interpreter,
 
 static struct value eval_plus(struct interpreter *interpreter,
                               struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
+  struct value result = {.type = vt_error};
   struct value lvalue = interpreter_eval(interpreter, lhs);
   struct value rvalue = interpreter_eval(interpreter, rhs);
   if (lvalue.type != vt_number || rvalue.type != vt_number) {
@@ -54,7 +54,7 @@ static struct value eval_plus(struct interpreter *interpreter,
 
 static struct value eval_minus(struct interpreter *interpreter,
                                struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
+  struct value result = {.type = vt_error};
   struct value lvalue = interpreter_eval(interpreter, lhs);
   struct value rvalue = interpreter_eval(interpreter, rhs);
   if (lvalue.type != vt_number || rvalue.type != vt_number) {
@@ -69,7 +69,7 @@ static struct value eval_minus(struct interpreter *interpreter,
 
 static struct value eval_multiply(struct interpreter *interpreter,
                                   struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
+  struct value result = {.type = vt_error};
   struct value lvalue = interpreter_eval(interpreter, lhs);
   struct value rvalue = interpreter_eval(interpreter, rhs);
   if (lvalue.type != vt_number || rvalue.type != vt_number) {
@@ -84,7 +84,7 @@ static struct value eval_multiply(struct interpreter *interpreter,
 
 static struct value eval_divide(struct interpreter *interpreter,
                                 struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
+  struct value result = {.type = vt_error};
   struct value lvalue = interpreter_eval(interpreter, lhs);
   struct value rvalue = interpreter_eval(interpreter, rhs);
   if (lvalue.type != vt_number || rvalue.type != vt_number) {
@@ -99,7 +99,7 @@ static struct value eval_divide(struct interpreter *interpreter,
 
 static struct value eval_modulo(struct interpreter *interpreter,
                                 struct ast_node *lhs, struct ast_node *rhs) {
-  struct value result = {.type = vt_null};
+  struct value result = {.type = vt_error};
   struct value lvalue = interpreter_eval(interpreter, lhs);
   struct value rvalue = interpreter_eval(interpreter, rhs);
   if (lvalue.type != vt_number || rvalue.type != vt_number) {
