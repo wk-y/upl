@@ -25,14 +25,30 @@ int run_repl(void) {
   struct interpreter interpreter;
   interpreter_init(&interpreter);
 
+  struct parser parser;
+  parser_init(&parser, stdin);
+
   for (;;) {
     fputs("$ ", stdout);
+
     // Read
-    struct parser parser;
-    parser_init(&parser, stdin);
     struct ast_node *ast = NULL;
-    if (parse_statement(&parser, &ast)) {
+    int err = parse_statement(&parser, &ast);
+    if (!err) {
+      parser_peek(&parser);
+      if (parser.tokenizer.token_type != tt_semicolon) {
+        err = 1;
+      } else {
+        parser_next(&parser);
+      }
+    }
+    if (err) {
       printf("Failed to parse\n");
+
+      // Reset the parser
+      parser_deinit(&parser);
+      parser_init(&parser, stdin);
+
       int c;
       do {
         c = getc(stdin);
@@ -54,11 +70,11 @@ int run_repl(void) {
     value_dec_ref(&v);
 
   cleanup_read:
-    parser_deinit(&parser);
     ast_node_destroy(ast);
     free(ast);
   }
 
+  parser_deinit(&parser);
   interpreter_deinit(&interpreter);
   return 0;
 }
