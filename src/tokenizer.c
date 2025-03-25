@@ -20,6 +20,7 @@ static int tok_parse_string(struct tokenizer *t);
 void tokenizer_init(struct tokenizer *t) {
   t->literal_len = 0;
   t->literal_cap = 1024;
+  t->peeking = false;
   if (!(t->literal = malloc(t->literal_cap))) {
     abort();
   };
